@@ -1,38 +1,65 @@
-```mermaid
 classDiagram
 
 class User {
-  id
-  name
-  email
-  password
-  register()
-  login()
+  +ObjectId id
+  +String name
+  +String email
+  +String passwordHash
+  +Date createdAt
+  +register()
+  +login()
+  +updateProfile()
 }
 
 class Snippet {
-  id
-  title
-  code
-  language
-  createdAt
-  update()
+  +ObjectId id
+  +String title
+  +String description
+  +String language
+  +ObjectId userId
+  +ObjectId currentVersionId
+  +Date createdAt
+  +Date updatedAt
+  +createSnippet()
+  +updateSnippet()
+  +deleteSnippet()
+  +getSnippet()
 }
 
 class Version {
-  id
-  snippetId
-  content
-  createdAt
+  +ObjectId id
+  +ObjectId snippetId
+  +Text codeContent
+  +Number versionNumber
+  +Date createdAt
+  +createVersion()
+  +getHistory()
+  +restoreVersion()
 }
 
-class FileAttachment {
-  id
-  snippetId
-  filePath
+class Attachment {
+  +ObjectId id
+  +ObjectId snippetId
+  +String fileName
+  +String fileUrl
+  +Date uploadedAt
+  +uploadFile()
+  +deleteFile()
 }
 
-User "1" --> "many" Snippet
-Snippet "1" --> "many" Version
-Snippet "1" --> "many" FileAttachment
-```
+class Tag {
+  +ObjectId id
+  +String name
+}
+
+class SnippetTag {
+  +ObjectId snippetId
+  +ObjectId tagId
+}
+
+User "1" --> "many" Snippet : creates
+Snippet "1" --> "many" Version : has
+Snippet "1" --> "many" Attachment : contains
+Snippet "many" --> "many" Tag : categorized by
+Tag "1" --> "many" SnippetTag
+Snippet "1" --> "many" SnippetTag
