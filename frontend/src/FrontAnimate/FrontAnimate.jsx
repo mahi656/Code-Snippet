@@ -15,19 +15,10 @@ export default function FrontAnimate() {
 
     return (
         <div className="relative w-full h-full min-h-screen bg-black overflow-hidden">
-            {/* Tetris Animation - hidden after 5s */}
-            <div
-                className={`absolute inset-0 z-10 transition-opacity duration-1000 ${showLogin ? "opacity-0 pointer-events-none" : "opacity-100"
-                    }`}
-            >
+            <div className={`absolute inset-0 z-10 transition-opacity duration-1000 ${showLogin ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
                 <TetrisLoading size="md" speed="normal" />
             </div>
-
-            {/* SignInPage - always mounted to allow background initialization, visible after 5s */}
-            <div
-                className={`absolute inset-0 z-0 transition-opacity duration-1000 ${showLogin ? "opacity-100" : "opacity-0 pointer-events-none"
-                    }`}
-            >
+            <div className={`absolute inset-0 z-0 transition-opacity duration-1000 ${showLogin ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <SignInPage />
             </div>
         </div>
