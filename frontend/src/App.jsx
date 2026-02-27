@@ -3,6 +3,7 @@ import './App.css'
 import FrontAnimate from './FrontAnimate/FrontAnimate'
 import { SignInPage } from "./components/UI/sign-in-flow-1"
 import Login from "../Login/Login.jsx"
+import Signup from "../Signup/Signup.jsx"
 
 function App() {
   return (
@@ -10,7 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<FrontAnimate />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Navigate to="/login" replace />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

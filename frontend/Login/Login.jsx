@@ -23,7 +23,7 @@ export const Login = () => {
           // actual signup logic
           // alert("Sign Up form submitted!");
         }}
-        onCreateAccount={() => navigate('/login')}
+        onCreateAccount={() => navigate('/signup')}
         // onGoogleSignIn={() => {
         //   alert("Google Sign Up clicked");
         // }}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Eye, EyeOff, Github } from 'lucide-react';
 
 import * as THREE from "three";
 
@@ -382,8 +383,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({ className }) => {
 
                                     <div className="space-y-4">
                                         <button className="backdrop-blur-[2px] w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-full py-3 px-4 transition-colors">
-                                            <span className="text-lg">G</span>
-                                            <span>Sign in with Github</span>
+                                            <Github className="w-5 h-5" />
+                                            <span>Continue with GitHub</span>
                                         </button>
 
                                         <div className="flex items-center gap-4">

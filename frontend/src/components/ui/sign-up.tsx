@@ -8,14 +8,13 @@ const GithubIcon = () => (
 
 // --- TYPE DEFINITIONS ---
 
-interface SignInPageProps {
+interface SignUpPageProps {
     title?: React.ReactNode;
     description?: React.ReactNode;
     heroImageSrc?: string;
-    onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
-    onGithubSignIn?: () => void;
-    onResetPassword?: () => void;
-    onCreateAccount?: () => void;
+    onSignUp?: (event: React.FormEvent<HTMLFormElement>) => void;
+    onGithubSignUp?: () => void;
+    onSignIn?: () => void;
 }
 
 // --- SUB-COMPONENTS ---
@@ -30,27 +29,34 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 
 // --- MAIN COMPONENT ---
 
-export const SignInPage: React.FC<SignInPageProps> = ({
-    title = <span className="font-light text-foreground dark:text-white tracking-tighter">Welcome</span>,
+export const SignUpPage: React.FC<SignUpPageProps> = ({
+    title = "Create Account",
     description = "Access your account and continue your journey with us",
     heroImageSrc,
+    onSignUp,
+    onGithubSignUp,
     onSignIn,
-    onGithubSignIn,
-    onResetPassword,
-    onCreateAccount,
 }) => {
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     return (
         <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw] bg-background dark:bg-black">
-            {/* Left column: sign-in form */}
+            {/* Left column: sign-up form */}
             <section className="flex-1 flex items-center justify-center p-8 bg-black">
                 <div className="w-full max-w-md">
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-4">
                         <h1 className="animate-element animate-delay-100 text-5xl font-normal leading-tight text-white mb-2">{title}</h1>
                         <p className="animate-element animate-delay-200 text-[#a1a1aa] text-[15px]">{description}</p>
 
-                        <form className="space-y-6 mt-4" onSubmit={onSignIn}>
+                        <form className="space-y-4 mt-4" onSubmit={onSignUp}>
+                            <div className="animate-element animate-delay-300">
+                                <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Full Name</label>
+                                <GlassInputWrapper>
+                                    <input name="fullName" type="text" placeholder="Enter your full name" className="w-full bg-transparent text-sm p-[18px] rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
+                                </GlassInputWrapper>
+                            </div>
+
                             <div className="animate-element animate-delay-300">
                                 <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Email Address</label>
                                 <GlassInputWrapper>
@@ -62,7 +68,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                                 <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Password</label>
                                 <GlassInputWrapper>
                                     <div className="relative">
-                                        <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-[18px] pr-12 rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
+                                        <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Create a password" className="w-full bg-transparent text-sm p-[18px] pr-12 rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
                                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-4 flex items-center">
                                             {showPassword ? <EyeOff strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" /> : <Eye strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" />}
                                         </button>
@@ -70,18 +76,20 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                                 </GlassInputWrapper>
                             </div>
 
-                            <div className="animate-element animate-delay-500 flex items-center justify-between text-sm pt-2">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <div className="w-[18px] h-[18px] rounded-full border border-[#3f3f46] flex items-center justify-center group-hover:border-[#71717a] transition-colors">
-                                        <input type="checkbox" name="rememberMe" className="opacity-0 absolute w-0 h-0" />
+                            <div className="animate-element animate-delay-400">
+                                <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Confirm Password</label>
+                                <GlassInputWrapper>
+                                    <div className="relative">
+                                        <input name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your password" className="w-full bg-transparent text-sm p-[18px] pr-12 rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
+                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-4 flex items-center">
+                                            {showConfirmPassword ? <EyeOff strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" /> : <Eye strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" />}
+                                        </button>
                                     </div>
-                                    <span className="text-[#f4f4f5] text-[15px]">Keep me signed in</span>
-                                </label>
-                                <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="text-[#a78bfa] hover:text-[#c4b5fd] text-[15px] transition-colors">Reset password</a>
+                                </GlassInputWrapper>
                             </div>
 
-                            <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-[#e5e5e5] hover:bg-white py-[18px] font-medium text-black transition-colors mt-6 text-[16px]">
-                                Sign In
+                            <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-[#e5e5e5] hover:bg-white py-[18px] font-medium text-black transition-colors mt-4 text-[16px]">
+                                Create Account
                             </button>
                         </form>
 
@@ -90,13 +98,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                             <span className="px-5 text-[14px] text-[#a1a1aa] bg-black absolute">Or continue with</span>
                         </div>
 
-                        <button onClick={onGithubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-[#27272a] rounded-2xl py-[18px] hover:bg-[#121212] transition-colors text-white font-medium mt-2 text-[16px]">
+                        <button onClick={onGithubSignUp} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-[#27272a] rounded-2xl py-[18px] hover:bg-[#121212] transition-colors text-white font-medium mt-2 text-[16px]">
                             <GithubIcon />
                             Continue with GitHub
                         </button>
 
                         <p className="animate-element animate-delay-900 text-center text-[15px] text-[#a1a1aa] mt-4">
-                            New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="text-[#a78bfa] hover:text-[#c4b5fd] transition-colors">Create Account</a>
+                            Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); onSignIn?.(); }} className="text-[#a78bfa] hover:text-[#c4b5fd] transition-colors">Sign In</a>
                         </p>
                     </div>
                 </div>
