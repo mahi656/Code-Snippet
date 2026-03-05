@@ -20,8 +20,7 @@ export const Login = () => {
         description="Access your account and continue your journey with us"
         onSignIn={(e) => {
           e.preventDefault();
-          // actual signup logic
-          // alert("Sign Up form submitted!");
+          navigate('/dashboard');
         }}
         onCreateAccount={() => navigate('/signup')}
         // onGoogleSignIn={() => {
