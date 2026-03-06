@@ -18,10 +18,14 @@ import {
   Settings,
   HelpCircle,
   User,
+  Calendar,
 } from "lucide-react";
+
+import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
 
 export const Example = () => {
   const [isDark, setIsDark] = useState(false);
+  const [selected, setSelected] = useState("Dashboard");
 
   useEffect(() => {
     if (isDark) {
@@ -34,16 +38,23 @@ export const Example = () => {
   return (
     <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
       <div className="flex w-full bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100">
-        <Sidebar />
-        <ExampleContent isDark={isDark} setIsDark={setIsDark} />
+        <Sidebar selected={selected} setSelected={setSelected} />
+        {selected === "Calendar" ? (
+          <div className="flex-1 bg-gray-50 dark:bg-black p-6 overflow-auto">
+            <div className="flex h-[calc(100vh-3rem)] rounded-xl shadow border bg-background overflow-hidden relative overflow-y-auto w-full">
+              <FullScreenCalendar data={[]} isDark={isDark} setIsDark={setIsDark} />
+            </div>
+          </div>
+        ) : (
+          <ExampleContent isDark={isDark} setIsDark={setIsDark} selected={selected} />
+        )}
       </div>
     </div>
   );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ selected, setSelected }: any) => {
   const [open, setOpen] = useState(true);
-  const [selected, setSelected] = useState("Dashboard");
 
   return (
     <nav
@@ -61,48 +72,11 @@ const Sidebar = () => {
           open={open}
         />
         <Option
-          Icon={DollarSign}
-          title="Sales"
+          Icon={Calendar}
+          title="Calendar"
           selected={selected}
           setSelected={setSelected}
           open={open}
-
-        />
-        <Option
-          Icon={Monitor}
-          title="View Site"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
-        <Option
-          Icon={ShoppingCart}
-          title="Products"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
-        <Option
-          Icon={Tag}
-          title="Tags"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
-        <Option
-          Icon={BarChart3}
-          title="Analytics"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
-        <Option
-          Icon={Users}
-          title="Members"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-
         />
       </div>
 
@@ -133,7 +107,7 @@ const Sidebar = () => {
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
+const Option = ({ Icon, title, selected, setSelected, open, notifs }: any) => {
   const isSelected = selected === title;
 
   return (
@@ -166,7 +140,7 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
   );
 };
 
-const TitleSection = ({ open }) => {
+const TitleSection = ({ open }: any) => {
   return (
     <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
       <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
@@ -217,7 +191,7 @@ const Logo = () => {
   );
 };
 
-const ToggleClose = ({ open, setOpen }) => {
+const ToggleClose = ({ open, setOpen }: any) => {
   return (
     <button
       onClick={() => setOpen(!open)}
@@ -243,13 +217,13 @@ const ToggleClose = ({ open, setOpen }) => {
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark }) => {
+const ExampleContent = ({ isDark, setIsDark, selected = "Dashboard" }: any) => {
   return (
     <div className="flex-1 bg-gray-50 dark:bg-black p-6 overflow-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{selected}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back to your dashboard</p>
         </div>
         <div className="flex items-center gap-4">
