@@ -87,45 +87,41 @@ export function FullScreenCalendar({ data = [], isDark, setIsDark }: FullScreenC
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-gray-50 dark:bg-black p-6 overflow-auto">
+    <div className="flex h-full w-full flex-col bg-white dark:bg-neutral-950 p-6 overflow-hidden">
       {/* Calendar Header block wrapping Theme Toggle */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-none items-center justify-between mb-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Calendar</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all your upcoming events</p>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">Calendar</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage all your upcoming events</p>
         </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsDark(!isDark)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
           >
-            {isDark ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col rounded-2xl shadow-sm border border-border/40 bg-card overflow-hidden transition-all duration-300">
+      <div className="flex flex-1 flex-col rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden transition-all duration-300">
         {/* Calendar Sub-Header */}
-        <div className="flex flex-col space-y-4 p-4 border-b border-border/40 bg-muted/20 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
+        <div className="flex flex-col space-y-4 p-4 border-b border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
           <div className="flex flex-auto">
             <div className="flex items-center gap-4">
-              <div className="hidden w-20 flex-col items-center justify-center rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm p-1 shadow-sm transition-all md:flex">
-                <h1 className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground pb-1">
+              <div className="hidden w-16 flex-col items-center justify-center rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-950 p-1 md:flex">
+                <span className="text-[10px] font-medium tracking-wider uppercase text-gray-500 dark:text-gray-400">
                   {format(today, "MMM")}
-                </h1>
-                <div className="flex w-full items-center justify-center rounded-lg bg-background py-1 text-xl font-bold shadow-sm">
-                  <span className="bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">{format(today, "d")}</span>
-                </div>
+                </span>
+                <span className="text-lg font-semibold text-primary dark:text-white">
+                  {format(today, "d")}
+                </span>
               </div>
               <div className="flex flex-col">
-                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100">
                   {format(firstDayCurrentMonth, "MMMM yyyy")}
                 </h2>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   {format(firstDayCurrentMonth, "MMM d")} -{" "}
                   {format(endOfMonth(firstDayCurrentMonth), "MMM d, yyyy")}
                 </p>
@@ -133,48 +129,48 @@ export function FullScreenCalendar({ data = [], isDark, setIsDark }: FullScreenC
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
-            <Button variant="outline" size="icon" className="hidden lg:flex">
-              <SearchIcon size={16} strokeWidth={2} aria-hidden="true" />
+          <div className="flex flex-col items-center gap-4 md:flex-row md:gap-4">
+            <Button variant="outline" size="icon" className="hidden lg:flex h-9 w-9 rounded-md border-gray-200 dark:border-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-800">
+              <SearchIcon size={16} strokeWidth={2} className="text-gray-600 dark:text-gray-400" />
             </Button>
 
-            <Separator orientation="vertical" className="hidden h-6 lg:block" />
+            <Separator orientation="vertical" className="hidden h-6 bg-gray-200 dark:bg-neutral-800 lg:block" />
 
-            <div className="inline-flex w-full -space-x-px rounded-lg shadow-sm shadow-black/5 md:w-auto rtl:space-x-reverse">
+            <div className="inline-flex w-full -space-x-px rounded-md shadow-sm md:w-auto rtl:space-x-reverse border border-gray-200 dark:border-neutral-800">
               <Button
                 onClick={previousMonth}
-                className="rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10"
-                variant="outline"
+                className="h-9 rounded-none rounded-l-md border-0 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-gray-400"
+                variant="ghost"
                 size="icon"
                 aria-label="Navigate to previous month"
               >
-                <ChevronLeftIcon size={16} strokeWidth={2} aria-hidden="true" />
+                <ChevronLeftIcon size={16} strokeWidth={2} />
               </Button>
               <Button
                 onClick={goToToday}
-                className="w-full rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10 md:w-auto"
-                variant="outline"
+                className="h-9 w-full rounded-none border-0 border-x border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-900 dark:text-gray-100 font-medium md:w-auto"
+                variant="ghost"
               >
                 Today
               </Button>
               <Button
                 onClick={nextMonth}
-                className="rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10"
-                variant="outline"
+                className="h-9 rounded-none rounded-r-md border-0 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-gray-400"
+                variant="ghost"
                 size="icon"
                 aria-label="Navigate to next month"
               >
-                <ChevronRightIcon size={16} strokeWidth={2} aria-hidden="true" />
+                <ChevronRightIcon size={16} strokeWidth={2} />
               </Button>
             </div>
 
-            <Separator orientation="vertical" className="hidden h-6 md:block" />
+            <Separator orientation="vertical" className="hidden h-6 bg-gray-200 dark:bg-neutral-800 md:block" />
             <Separator
               orientation="horizontal"
-              className="block w-full md:hidden"
+              className="block w-full bg-gray-200 dark:bg-neutral-800 md:hidden"
             />
 
-            <Button className="w-full gap-2 md:w-auto">
+            <Button className="h-9 w-full gap-2 md:w-auto bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 dark:text-black">
               <PlusCircleIcon size={16} strokeWidth={2} aria-hidden="true" />
               <span>New Event</span>
             </Button>
@@ -182,205 +178,101 @@ export function FullScreenCalendar({ data = [], isDark, setIsDark }: FullScreenC
         </div>
 
         {/* Calendar Grid */}
-        <div className="lg:flex lg:flex-auto lg:flex-col bg-background/40">
+        <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-neutral-900 border-none">
           {/* Week Days Header */}
-          <div className="grid grid-cols-7 border-b border-border/40 bg-muted/10 text-center text-[11px] uppercase tracking-wider font-semibold leading-6 text-muted-foreground lg:flex-none">
-            <div className="border-r py-2.5">Sun</div>
-            <div className="border-r py-2.5">Mon</div>
-            <div className="border-r py-2.5">Tue</div>
-            <div className="border-r py-2.5">Wed</div>
-            <div className="border-r py-2.5">Thu</div>
-            <div className="border-r py-2.5">Fri</div>
-            <div className="py-2.5">Sat</div>
+          <div className="grid grid-cols-7 border-b border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-950 text-center text-xs uppercase tracking-wider font-semibold leading-6 text-gray-500 dark:text-gray-400 py-1.5 flex-none">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
           </div>
 
           {/* Calendar Days */}
-          <div className="flex text-sm leading-6 lg:flex-auto">
-            <div className="hidden w-full lg:grid lg:grid-cols-7 lg:grid-rows-5">
-              {days.map((day, dayIdx) =>
-                !isDesktop ? (
-                  <button
-                    onClick={() => setSelectedDay(day)}
-                    key={dayIdx}
-                    type="button"
-                    className={cn(
-                      isEqual(day, selectedDay) && "text-primary-foreground",
-                      !isEqual(day, selectedDay) &&
-                      !isToday(day) &&
-                      isSameMonth(day, firstDayCurrentMonth) &&
-                      "text-foreground",
-                      !isEqual(day, selectedDay) &&
-                      !isToday(day) &&
-                      !isSameMonth(day, firstDayCurrentMonth) &&
-                      "text-muted-foreground",
-                      (isEqual(day, selectedDay) || isToday(day)) &&
-                      "font-semibold",
-                      "flex h-14 flex-col border-b border-r px-3 py-2 hover:bg-muted focus:z-10",
-                    )}
-                  >
-                    <time
-                      dateTime={format(day, "yyyy-MM-dd")}
+          <div className="flex flex-1 overflow-hidden bg-gray-200 dark:bg-neutral-800">
+            {/* Desktop Grid */}
+            <div className="hidden w-full lg:grid lg:grid-cols-7 auto-rows-[minmax(100px,1fr)] gap-px bg-gray-200 dark:bg-neutral-800 overflow-y-auto">
+              {days.map((day, dayIdx) => (
+                <div
+                  key={dayIdx}
+                  onClick={() => setSelectedDay(day)}
+                  className={cn(
+                    "relative flex flex-col bg-white dark:bg-neutral-900 transition-colors cursor-pointer p-2",
+                    !isSameMonth(day, firstDayCurrentMonth) && "bg-gray-50/50 dark:bg-neutral-950/50",
+                    (isEqual(day, selectedDay) || isToday(day)) ? "bg-blue-50/30 dark:bg-blue-900/10 hover:bg-blue-50/50 dark:hover:bg-blue-900/20" : "hover:bg-gray-50 dark:hover:bg-neutral-800"
+                  )}
+                >
+                  <header className="flex items-center mb-1">
+                    <button
+                      type="button"
                       className={cn(
-                        "ml-auto flex size-6 items-center justify-center rounded-full",
-                        isEqual(day, selectedDay) &&
-                        isToday(day) &&
-                        "bg-primary text-primary-foreground",
-                        isEqual(day, selectedDay) &&
-                        !isToday(day) &&
-                        "bg-primary text-primary-foreground",
+                        "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition-colors",
+                        isEqual(day, selectedDay) && "bg-black dark:bg-white text-white dark:text-black",
+                        !isEqual(day, selectedDay) && isToday(day) && "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+                        !isEqual(day, selectedDay) && !isToday(day) && isSameMonth(day, firstDayCurrentMonth) && "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-neutral-800",
+                        !isEqual(day, selectedDay) && !isToday(day) && !isSameMonth(day, firstDayCurrentMonth) && "text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-800"
                       )}
                     >
-                      {format(day, "d")}
-                    </time>
-                    {data.filter((date) => isSameDay(date.day, day)).length >
-                      0 && (
-                        <div>
-                          {data
-                            .filter((date) => isSameDay(date.day, day))
-                            .map((date) => (
-                              <div
-                                key={date.day.toString()}
-                                className="-mx-0.5 mt-auto flex flex-wrap-reverse"
-                              >
-                                {date.events.map((event) => (
-                                  <span
-                                    key={event.id}
-                                    className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground"
-                                  />
-                                ))}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                  </button>
-                ) : (
-                  <div
-                    key={dayIdx}
-                    onClick={() => setSelectedDay(day)}
-                    className={cn(
-                      dayIdx === 0 && colStartClasses[getDay(day)],
-                      !isEqual(day, selectedDay) &&
-                      !isToday(day) &&
-                      !isSameMonth(day, firstDayCurrentMonth) &&
-                      "bg-accent/50 text-muted-foreground",
-                      "relative flex flex-col border-b border-r hover:bg-muted focus:z-10",
-                      !isEqual(day, selectedDay) && "hover:bg-accent/75",
-                    )}
-                  >
-                    <header className="flex items-center justify-between p-2.5">
-                      <button
-                        type="button"
-                        className={cn(
-                          isEqual(day, selectedDay) && "text-primary-foreground",
-                          !isEqual(day, selectedDay) &&
-                          !isToday(day) &&
-                          isSameMonth(day, firstDayCurrentMonth) &&
-                          "text-foreground",
-                          !isEqual(day, selectedDay) &&
-                          !isToday(day) &&
-                          !isSameMonth(day, firstDayCurrentMonth) &&
-                          "text-muted-foreground",
-                          isEqual(day, selectedDay) &&
-                          isToday(day) &&
-                          "border-none bg-primary",
-                          isEqual(day, selectedDay) &&
-                          !isToday(day) &&
-                          "bg-foreground",
-                          (isEqual(day, selectedDay) || isToday(day)) &&
-                          "font-semibold",
-                          "flex h-7 w-7 items-center justify-center rounded-full text-xs hover:border",
-                        )}
-                      >
-                        <time dateTime={format(day, "yyyy-MM-dd")}>
-                          {format(day, "d")}
-                        </time>
-                      </button>
-                    </header>
-                    <div className="flex-1 p-2.5">
-                      {data
-                        .filter((event) => isSameDay(event.day, day))
-                        .map((day) => (
-                          <div key={day.day.toString()} className="space-y-1.5">
-                            {day.events.slice(0, 1).map((event) => (
-                              <div
-                                key={event.id}
-                                className="flex flex-col items-start gap-1 rounded-md border border-border/40 bg-background/60 backdrop-blur-md p-2 text-xs leading-tight shadow-sm transition-all hover:bg-muted/80 hover:shadow-md cursor-pointer group"
-                              >
-                                <p className="font-semibold text-foreground group-hover:text-primary transition-colors leading-none tracking-tight">
-                                  {event.name}
-                                </p>
-                                <p className="leading-none text-muted-foreground">
-                                  {event.time}
-                                </p>
-                              </div>
-                            ))}
-                            {day.events.length > 1 && (
-                              <div className="text-xs text-muted-foreground">
-                                + {day.events.length - 1} more
-                              </div>
-                            )}
+                      <time dateTime={format(day, "yyyy-MM-dd")}>{format(day, "d")}</time>
+                    </button>
+                  </header>
+                  <div className="flex-1 overflow-y-auto space-y-1">
+                    {data.filter((event) => isSameDay(event.day, day)).map((dayData) => (
+                      <React.Fragment key={dayData.day.toString()}>
+                        {dayData.events.slice(0, 3).map((event) => (
+                          <div
+                            key={event.id}
+                            className="flex flex-col items-start gap-1 rounded bg-gray-100 dark:bg-neutral-800 px-2 py-1 text-xs leading-tight transition-colors hover:bg-gray-200 dark:hover:bg-neutral-700 cursor-pointer"
+                          >
+                            <p className="font-medium text-gray-900 dark:text-gray-100 truncate w-full">{event.name}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate w-full">{event.time}</p>
                           </div>
                         ))}
-                    </div>
+                        {dayData.events.length > 3 && (
+                          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 px-1 py-0.5 hover:text-gray-700 dark:hover:text-gray-300">
+                            + {dayData.events.length - 3} more
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
                   </div>
-                ),
-              )}
+                </div>
+              ))}
             </div>
 
-            <div className="isolate grid w-full grid-cols-7 grid-rows-5 border-x lg:hidden">
+            {/* Mobile Grid */}
+            <div className="grid w-full grid-cols-7 auto-rows-[minmax(60px,1fr)] gap-px bg-gray-200 dark:bg-neutral-800 lg:hidden overflow-y-auto">
               {days.map((day, dayIdx) => (
                 <button
-                  onClick={() => setSelectedDay(day)}
                   key={dayIdx}
                   type="button"
+                  onClick={() => setSelectedDay(day)}
                   className={cn(
-                    isEqual(day, selectedDay) && "text-primary-foreground",
-                    !isEqual(day, selectedDay) &&
-                    !isToday(day) &&
-                    isSameMonth(day, firstDayCurrentMonth) &&
-                    "text-foreground",
-                    !isEqual(day, selectedDay) &&
-                    !isToday(day) &&
-                    !isSameMonth(day, firstDayCurrentMonth) &&
-                    "text-muted-foreground",
-                    (isEqual(day, selectedDay) || isToday(day)) &&
-                    "font-semibold",
-                    "flex h-14 flex-col border-b border-r px-3 py-2 hover:bg-muted focus:z-10",
+                    "flex flex-col items-center bg-white dark:bg-neutral-900 p-1 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors focus:z-10",
+                    !isSameMonth(day, firstDayCurrentMonth) && "bg-gray-50/50 dark:bg-neutral-950/50"
                   )}
                 >
                   <time
                     dateTime={format(day, "yyyy-MM-dd")}
                     className={cn(
-                      "ml-auto flex size-6 items-center justify-center rounded-full",
-                      isEqual(day, selectedDay) &&
-                      isToday(day) &&
-                      "bg-primary text-primary-foreground",
-                      isEqual(day, selectedDay) &&
-                      !isToday(day) &&
-                      "bg-primary text-primary-foreground",
+                      "mt-1 flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium",
+                      isEqual(day, selectedDay) && "bg-black dark:bg-white text-white dark:text-black",
+                      !isEqual(day, selectedDay) && isToday(day) && "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+                      !isEqual(day, selectedDay) && !isToday(day) && isSameMonth(day, firstDayCurrentMonth) && "text-gray-900 dark:text-gray-100",
+                      !isEqual(day, selectedDay) && !isToday(day) && !isSameMonth(day, firstDayCurrentMonth) && "text-gray-400 dark:text-gray-600"
                     )}
                   >
                     {format(day, "d")}
                   </time>
-                  {data.filter((date) => isSameDay(date.day, day)).length > 0 && (
-                    <div>
-                      {data
-                        .filter((date) => isSameDay(date.day, day))
-                        .map((date) => (
-                          <div
-                            key={date.day.toString()}
-                            className="-mx-0.5 mt-auto flex flex-wrap-reverse"
-                          >
-                            {date.events.map((event) => (
-                              <span
-                                key={event.id}
-                                className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground"
-                              />
-                            ))}
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                  <div className="mt-auto flex flex-wrap justify-center gap-0.5 px-1 pb-1">
+                    {data.filter((d) => isSameDay(d.day, day)).map((dayData) =>
+                      dayData.events.map((event) => (
+                        <span key={event.id} className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      ))
+                    )}
+                  </div>
                 </button>
               ))}
             </div>

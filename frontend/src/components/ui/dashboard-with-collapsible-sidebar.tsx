@@ -40,10 +40,8 @@ export const Example = () => {
       <div className="flex w-full bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100">
         <Sidebar selected={selected} setSelected={setSelected} />
         {selected === "Calendar" ? (
-          <div className="flex-1 bg-gray-50 dark:bg-black p-6 overflow-auto">
-            <div className="flex h-[calc(100vh-3rem)] rounded-xl shadow border bg-background overflow-hidden relative overflow-y-auto w-full">
-              <FullScreenCalendar data={[]} isDark={isDark} setIsDark={setIsDark} />
-            </div>
+          <div className="flex-1 bg-gray-50 dark:bg-neutral-950 overflow-hidden flex flex-col h-screen">
+            <FullScreenCalendar data={[]} isDark={isDark} setIsDark={setIsDark} />
           </div>
         ) : (
           <ExampleContent isDark={isDark} setIsDark={setIsDark} selected={selected} />
@@ -153,9 +151,6 @@ const TitleSection = ({ open }: any) => {
                   <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
                     CodeSnippet
                   </span>
-                  {/* <span className="block text-xs text-gray-500 dark:text-gray-400">
-                    Pro Plan
-                  </span> */}
                 </div>
               </div>
             </div>
@@ -249,7 +244,7 @@ const ExampleContent = ({ isDark, setIsDark, selected = "Dashboard" }: any) => {
 
       {/* Content Area */}
       <div className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 shadow-sm flex items-center justify-center min-h-[400px]">
-        <p className="text-gray-500 dark:text-gray-400 text-lg">Your actual dashboard content will go here...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-lg">Your actual dashboard content will go here</p>
       </div>
     </div>
   );
