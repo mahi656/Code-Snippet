@@ -23,9 +23,6 @@ export const Login = () => {
           navigate('/dashboard');
         }}
         onCreateAccount={() => navigate('/signup')}
-        // onGoogleSignIn={() => {
-        //   alert("Google Sign Up clicked");
-        // }}
         heroImageSrc={photo}
       />
     </motion.div>
