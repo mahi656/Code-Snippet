@@ -1,46 +1,43 @@
 import React, { useState, useEffect } from "react";
 import {
-  Home,
-  DollarSign,
-  Monitor,
-  ShoppingCart,
+  FileText,
+  Heart,
+  Trash2,
   Tag,
-  BarChart3,
-  Users,
-  ChevronDown,
-  ChevronsRight,
+  CodeXml,
+  Folder,
+  FolderOpen,
   Moon,
   Sun,
-  TrendingUp,
-  Activity,
-  Package,
+  ChevronDown,
+  ChevronRight,
   Bell,
-  Settings,
-  HelpCircle,
-  User,
+  Search,
   Calendar,
+  FileCode2,
+  FileJson,
 } from "lucide-react";
 
 import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
 
 export const Example = () => {
   const [isDark, setIsDark] = useState(false);
-  const [selected, setSelected] = useState("Dashboard");
+  const [selected, setSelected] = useState("All Snippets");
 
   useEffect(() => {
     if (isDark) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   }, [isDark]);
 
   return (
-    <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
-      <div className="flex w-full bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100">
-        <Sidebar selected={selected} setSelected={setSelected} />
+    <div className={`flex min-h-screen w-full ${isDark ? "dark" : ""}`}>
+      <div className="flex w-full bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 h-screen overflow-hidden">
+        <Sidebar selected={selected} setSelected={setSelected} isDark={isDark} setIsDark={setIsDark} />
         {selected === "Calendar" ? (
-          <div className="flex-1 bg-gray-50 dark:bg-neutral-950 overflow-hidden flex flex-col h-screen">
+          <div className="flex-1 bg-white dark:bg-neutral-950 overflow-hidden flex flex-col h-screen">
             <FullScreenCalendar data={[]} isDark={isDark} setIsDark={setIsDark} />
           </div>
         ) : (
@@ -51,200 +48,195 @@ export const Example = () => {
   );
 };
 
-const Sidebar = ({ selected, setSelected }: any) => {
-  const [open, setOpen] = useState(true);
-
+const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
   return (
-    <nav
-      className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${open ? 'w-64' : 'w-16'
-        } border-gray-200 dark:border-neutral-800 bg-white dark:bg-black p-2 shadow-sm`}
-    >
-      <TitleSection open={open} />
+    <nav className="flex w-64 flex-col bg-[#f5f6f8] dark:bg-[#111318] border-r border-gray-200 dark:border-neutral-800 h-full overflow-hidden">
+      <div className="p-4 py-5">
+        <h2 className="text-[13px] font-semibold text-gray-500 mb-2 px-3">Navigation</h2>
+      </div>
 
-      <div className="space-y-1 mb-8">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 space-y-1 scrollbar-hide">
         <Option
-          Icon={Home}
-          title="Dashboard"
+          Icon={FileText}
+          title="All Snippets"
           selected={selected}
           setSelected={setSelected}
-          open={open}
+        />
+        <Option
+          Icon={Heart}
+          title="Favorites"
+          selected={selected}
+          setSelected={setSelected}
         />
         <Option
           Icon={Calendar}
           title="Calendar"
           selected={selected}
           setSelected={setSelected}
-          open={open}
         />
+        <Option
+          Icon={Trash2}
+          title="Trash"
+          selected={selected}
+          setSelected={setSelected}
+        />
+
+        <div className="my-6" />
+
+        <div className="space-y-4">
+          <CollapsibleGroup title="Projects" Icon={Folder} defaultExpanded>
+            <div className="py-2 px-3 text-xs text-gray-400 dark:text-gray-500 italic">No projects yet</div>
+          </CollapsibleGroup>
+
+          <CollapsibleGroup title="Tags" Icon={Tag}>
+            {/* Empty by default - will be populated when you create defined code snippets */}
+            <div className="py-2 px-3 text-xs text-gray-400 dark:text-gray-500 italic">No tags defined yet</div>
+          </CollapsibleGroup>
+
+          <CollapsibleGroup title="Languages" Icon={CodeXml}>
+            {/* Empty by default - will be populated when you create defined code snippets */}
+            <div className="py-2 px-3 text-xs text-gray-400 dark:text-gray-500 italic">No languages defined yet</div>
+          </CollapsibleGroup>
+        </div>
+        <div className="pb-4" />
       </div>
 
-      {open && (
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1">
-          <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-            Account
-          </div>
-          <Option
-            Icon={Settings}
-            title="Settings"
-            selected={selected}
-            setSelected={setSelected}
-            open={open}
-          />
-          <Option
-            Icon={HelpCircle}
-            title="Help & Support"
-            selected={selected}
-            setSelected={setSelected}
-            open={open}
-          />
-        </div>
-      )}
+      <div className="p-4 mt-auto">
+        <div className="flex items-center gap-4 px-2">
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-800 transition-colors text-gray-700 dark:text-gray-300"
+          >
+            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
 
-      <ToggleClose open={open} setOpen={setOpen} />
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2563eb] text-white font-medium text-sm">
+              A
+            </div>
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
+              User
+            </span>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected, open, notifs }: any) => {
+const Option = ({ Icon, title, selected, setSelected }: any) => {
   const isSelected = selected === title;
 
   return (
     <button
       onClick={() => setSelected(title)}
-      className={`relative flex h-11 w-full items-center rounded-md transition-all duration-200 ${isSelected
-        ? "bg-gray-100 dark:bg-neutral-800 text-black dark:text-white shadow-sm border-l-2 border-black dark:border-white"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-900 hover:text-gray-900 dark:hover:text-gray-200"
+      className={`relative flex h-10 w-full items-center rounded-lg transition-all duration-200 px-3 ${isSelected
+        ? "bg-gray-200/60 dark:bg-neutral-800 text-gray-900 dark:text-white font-semibold shadow-sm"
+        : "text-gray-700 dark:text-gray-300 hover:bg-gray-200/40 dark:hover:bg-neutral-800/50 font-medium"
         }`}
     >
-      <div className="grid h-full w-12 place-content-center">
-        <Icon className="h-4 w-4" />
+      <div className="flex items-center gap-3">
+        <Icon className={`h-[18px] w-[18px] ${isSelected ? "text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`} />
+        <span className="text-[15px]">{title}</span>
       </div>
-
-      {open && (
-        <span
-          className={`text-sm font-medium transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'
-            }`}
-        >
-          {title}
-        </span>
-      )}
-
-      {notifs && open && (
-        <span className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-black dark:bg-white text-xs text-white dark:text-black font-medium">
-          {notifs}
-        </span>
-      )}
     </button>
   );
 };
 
-const TitleSection = ({ open }: any) => {
-  return (
-    <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
-      <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
-        <div className="flex items-center gap-3">
-          <Logo />
-          {open && (
-            <div className={`transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="flex items-center gap-2">
-                <div>
-                  <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    CodeSnippet
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        {open && (
-          <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-        )}
-      </div>
-    </div>
-  );
-};
+const CollapsibleGroup = ({ title, Icon, children, defaultExpanded = false }: any) => {
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
-const Logo = () => {
   return (
-    <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-black dark:bg-white shadow-sm">
-      <svg
-        width="20"
-        height="auto"
-        viewBox="0 0 50 39"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="fill-white dark:fill-black"
+    <div className="flex flex-col">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="relative flex h-9 w-full items-center justify-between rounded-lg transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-200/40 dark:hover:bg-neutral-800/50 px-3 font-medium cursor-pointer"
       >
-        <path
-          d="M16.4992 2H37.5808L22.0816 24.9729H1L16.4992 2Z"
-        />
-        <path
-          d="M17.4224 27.102L11.4192 36H33.5008L49 13.0271H32.7024L23.2064 27.102H17.4224Z"
-        />
-      </svg>
+        <div className="flex items-center gap-3">
+          <Icon className="h-4 w-4" />
+          <span className="text-[14px]">{title}</span>
+        </div>
+        <div>
+          {expanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
+        </div>
+      </button>
+      {expanded && (
+        <div className="mt-1 flex flex-col px-3">
+          {children}
+        </div>
+      )}
     </div>
   );
 };
 
-const ToggleClose = ({ open, setOpen }: any) => {
+const ProjectFolder = ({ title, children, defaultExpanded = false }: any) => {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  return (
+    <div className="flex flex-col">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="relative flex min-h-[30px] w-full items-center justify-between rounded-lg px-2 py-1 transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-200/40 dark:hover:bg-neutral-800/50"
+      >
+        <div className="flex items-center gap-2">
+          <ChevronRight className={`h-3 w-3 text-gray-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
+          {expanded ? <FolderOpen className="h-4 w-4 text-blue-500" /> : <Folder className="h-4 w-4 text-blue-400 dark:text-blue-500" />}
+          <span className="text-[14px]">{title}</span>
+        </div>
+      </button>
+      {expanded && (
+        <div className="flex flex-col pl-4 border-l border-gray-200 dark:border-neutral-800 ml-4 mt-1 space-y-0.5">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ProjectFile = ({ title, Icon = FileText, selected, setSelected }: any) => {
+  const isSelected = selected === title;
   return (
     <button
-      onClick={() => setOpen(!open)}
-      className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+      onClick={() => setSelected(title)}
+      className={`relative flex min-h-[30px] w-full items-center justify-between rounded-lg px-2 py-1 transition-colors ${isSelected
+        ? "bg-gray-200/60 dark:bg-neutral-800 text-gray-900 dark:text-white font-semibold"
+        : "text-gray-700 dark:text-gray-300 hover:bg-gray-200/40 dark:hover:bg-neutral-800/50"
+        }`}
     >
-      <div className="flex items-center p-3">
-        <div className="grid size-10 place-content-center">
-          <ChevronsRight
-            className={`h-4 w-4 transition-transform duration-300 text-gray-500 dark:text-gray-400 ${open ? "rotate-180" : ""
-              }`}
-          />
-        </div>
-        {open && (
-          <span
-            className={`text-sm font-medium text-gray-600 dark:text-gray-300 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'
-              }`}
-          >
-            Hide
-          </span>
-        )}
+      <div className="flex items-center gap-2 pl-4">
+        <Icon className="h-4 w-4 text-gray-500" />
+        <span className="text-[14px]">{title}</span>
       </div>
     </button>
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, selected = "Dashboard" }: any) => {
+const ExampleContent = ({ isDark, setIsDark, selected }: any) => {
   return (
-    <div className="flex-1 bg-gray-50 dark:bg-black p-6 overflow-auto">
+    <div className="flex-1 bg-white dark:bg-[#0a0a0a] flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="h-16 flex items-center justify-between px-8 border-b border-gray-100 dark:border-neutral-800 shrink-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{selected}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back to your dashboard</p>
+          <h1 className="text-xl font-semibold capitalize text-gray-900 dark:text-gray-100">{selected}</h1>
         </div>
         <div className="flex items-center gap-4">
-          <button className="relative p-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-          </button>
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-          >
-            {isDark ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </button>
-          <button className="p-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-            <User className="h-5 w-5" />
+          <div className="relative flex items-center">
+            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+            <input type="text" placeholder="Search..." className="h-9 w-64 rounded-md border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900 pl-9 pr-4 text-sm outline-none focus:border-blue-500 dark:text-white transition-colors" />
+          </div>
+          <button className="relative p-2 rounded-lg bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+            <Bell className="h-4 w-4" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-blue-500 rounded-full"></span>
           </button>
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 shadow-sm flex items-center justify-center min-h-[400px]">
-        <p className="text-gray-500 dark:text-gray-400 text-lg">Your actual dashboard content will go here</p>
+      <div className="flex-1 overflow-auto p-8">
+        <div className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-900/50 p-8 shadow-sm flex items-center justify-center h-full min-h-[400px]">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Content for <strong className="capitalize">{selected}</strong> goes here.
+          </p>
+        </div>
       </div>
     </div>
   );
