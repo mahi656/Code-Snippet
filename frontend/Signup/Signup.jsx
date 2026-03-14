@@ -20,7 +20,6 @@ export const Signup = () => {
                 description="Access your account and continue your journey with us"
                 onSignUp={(e) => {
                     e.preventDefault();
-                    // actual signup logic
                     // alert("Sign Up form submitted!");
                 }}
                 onSignIn={() => navigate('/login')}
