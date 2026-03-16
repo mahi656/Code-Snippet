@@ -92,7 +92,7 @@ export function FullScreenCalendar({ data = [], isDark, setIsDark }: FullScreenC
       <div className="flex flex-none items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">Calendar</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage all your upcoming events</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your coding milestones and snippet updates</p>
         </div>
         <div className="flex items-center gap-4">
           <button
@@ -130,11 +130,7 @@ export function FullScreenCalendar({ data = [], isDark, setIsDark }: FullScreenC
           </div>
 
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-4">
-            <Button variant="outline" size="icon" className="hidden lg:flex h-9 w-9 rounded-md border-gray-200 dark:border-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-800">
-              <SearchIcon size={16} strokeWidth={2} className="text-gray-600 dark:text-gray-400" />
-            </Button>
 
-            <Separator orientation="vertical" className="hidden h-6 bg-gray-200 dark:bg-neutral-800 lg:block" />
 
             <div className="inline-flex w-full -space-x-px rounded-md shadow-sm md:w-auto rtl:space-x-reverse border border-gray-200 dark:border-neutral-800">
               <Button
@@ -172,7 +168,7 @@ export function FullScreenCalendar({ data = [], isDark, setIsDark }: FullScreenC
 
             <Button className="h-9 w-full gap-2 md:w-auto bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 dark:text-black">
               <PlusCircleIcon size={16} strokeWidth={2} aria-hidden="true" />
-              <span>New Event</span>
+              <span>Add Milestone</span>
             </Button>
           </div>
         </div>
