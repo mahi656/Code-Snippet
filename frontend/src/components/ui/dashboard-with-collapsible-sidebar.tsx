@@ -16,6 +16,9 @@ import {
   Calendar,
   FileCode2,
   FileJson,
+  Plus,
+  FilePlus,
+  FolderPlus,
 } from "lucide-react";
 
 import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
@@ -49,6 +52,39 @@ export const Example = () => {
 };
 
 const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+
+  const [creatingItemInProjectId, setCreatingItemInProjectId] = useState<number | null>(null);
+  const [creatingItemType, setCreatingItemType] = useState<"file" | "folder" | null>(null);
+  const [newItemName, setNewItemName] = useState("");
+
+  const handleCreateProject = () => {
+    if (newProjectName.trim()) {
+      setProjects([...projects, { id: Date.now(), name: newProjectName.trim(), items: [] }]);
+    }
+    setNewProjectName("");
+    setIsCreatingProject(false);
+  };
+
+  const handleCreateItem = () => {
+    if (newItemName.trim() && creatingItemInProjectId) {
+      setProjects(projects.map(p => {
+        if (p.id === creatingItemInProjectId) {
+          return {
+            ...p,
+            items: [...(p.items || []), { id: Date.now(), name: newItemName.trim(), type: creatingItemType }]
+          };
+        }
+        return p;
+      }));
+    }
+    setNewItemName("");
+    setCreatingItemInProjectId(null);
+    setCreatingItemType(null);
+  };
+
   return (
     <nav className="flex w-72 flex-col bg-[#f8f9fa] dark:bg-[#111216] border-r border-gray-200 dark:border-neutral-800/60 h-full overflow-hidden">
 
@@ -95,7 +131,93 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
 
         <div className="space-y-4">
           <CollapsibleGroup title="Projects" Icon={Folder} defaultExpanded>
-            <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No projects yet</div>
+            <div className="mt-1 flex flex-col space-y-1">
+
+              {/* Render Existing Projects */}
+              {projects.map((proj: any) => (
+                <ProjectFolder
+                  key={proj.id}
+                  title={proj.name}
+                  defaultExpanded
+                  onNewFile={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("file"); setNewItemName(""); }}
+                  onNewFolder={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("folder"); setNewItemName(""); }}
+                >
+                  {/* Render Items */}
+                  {proj.items?.map((item: any) => (
+                    item.type === "folder" ? (
+                      <ProjectFolder key={item.id} title={item.name}>
+                        <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty</div>
+                      </ProjectFolder>
+                    ) : (
+                      <ProjectFile key={item.id} title={item.name} selected={selected} setSelected={setSelected} />
+                    )
+                  ))}
+
+                  {/* Inline Input for New Item directly inside project */}
+                  {creatingItemInProjectId === proj.id && (
+                    <div className="flex items-center gap-2 px-1 py-1 ml-1 mt-0.5 border border-blue-500 rounded bg-white dark:bg-[#1a1b1e]">
+                      {creatingItemType === "folder" ? <Folder className="h-3 w-3 text-blue-500 shrink-0" /> : <FileText className="h-3 w-3 text-blue-500 shrink-0" />}
+                      <input
+                        autoFocus
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleCreateItem();
+                          else if (e.key === 'Escape') {
+                            setNewItemName("");
+                            setCreatingItemInProjectId(null);
+                            setCreatingItemType(null);
+                          }
+                        }}
+                        onBlur={handleCreateItem}
+                        className="bg-transparent text-[13px] outline-none w-full text-gray-900 dark:text-white"
+                        placeholder={`New ${creatingItemType}...`}
+                      />
+                    </div>
+                  )}
+
+                  {(!proj.items || proj.items.length === 0) && creatingItemInProjectId !== proj.id && (
+                    <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty Project</div>
+                  )}
+                </ProjectFolder>
+              ))}
+
+              {/* Inline Input for New Project */}
+              {isCreatingProject ? (
+                <div className="flex items-center gap-2 px-2 py-1.5 mx-1 mt-1 border border-blue-500 rounded-md bg-white dark:bg-[#1a1b1e] shadow-sm">
+                  <Folder className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                  <input
+                    autoFocus
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreateProject();
+                      else if (e.key === 'Escape') {
+                        setNewProjectName("");
+                        setIsCreatingProject(false);
+                      }
+                    }}
+                    onBlur={handleCreateProject}
+                    className="bg-transparent text-[13px] outline-none w-full text-gray-900 dark:text-white"
+                    placeholder="Project name..."
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsCreatingProject(true)}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 rounded-md transition-colors"
+                  title="Create a new project"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create New Project
+                </button>
+              )}
+
+              {/* Empty State */}
+              {projects.length === 0 && !isCreatingProject && (
+                <div className="py-1 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No projects yet</div>
+              )}
+            </div>
           </CollapsibleGroup>
 
           <CollapsibleGroup title="Tags" Icon={Tag}>
@@ -177,20 +299,32 @@ const CollapsibleGroup = ({ title, Icon, children, defaultExpanded = false }: an
   );
 };
 
-const ProjectFolder = ({ title, children, defaultExpanded = false }: any) => {
+const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, onNewFolder }: any) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
   return (
-    <div className="flex flex-col">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="relative flex h-8 w-full items-center justify-between rounded-md px-2 transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-200/40 dark:hover:bg-neutral-800/40"
-      >
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col group">
+      <div className="relative flex h-8 w-full items-center justify-between rounded-md px-2 transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-200/40 dark:hover:bg-neutral-800/40">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex flex-1 items-center gap-2 outline-none"
+        >
           <ChevronRight className={`h-[14px] w-[14px] text-gray-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
           {expanded ? <FolderOpen className="h-4 w-4 text-blue-500" /> : <Folder className="h-4 w-4 text-blue-400 dark:text-blue-500" />}
           <span className="text-[14px] pt-[1px] font-medium">{title}</span>
+        </button>
+        <div className="hidden group-hover:flex items-center gap-1">
+          {onNewFile && (
+            <button onClick={(e) => { e.stopPropagation(); setExpanded(true); onNewFile(); }} className="p-1 hover:bg-gray-300 dark:hover:bg-neutral-700 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" title="New File">
+              <FilePlus className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {onNewFolder && (
+            <button onClick={(e) => { e.stopPropagation(); setExpanded(true); onNewFolder(); }} className="p-1 hover:bg-gray-300 dark:hover:bg-neutral-700 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" title="New Folder">
+              <FolderPlus className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
-      </button>
+      </div>
       {expanded && (
         <div className="flex flex-col pl-4 border-l border-gray-200 dark:border-neutral-800/60 ml-4 mt-0.5 space-y-0.5">
           {children}
