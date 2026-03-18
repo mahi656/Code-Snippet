@@ -22,10 +22,14 @@ import {
 } from "lucide-react";
 
 import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
+import NewSnippet from "../Snippet/NewSnippet.jsx";
 
 export const Example = () => {
   const [isDark, setIsDark] = useState(false);
   const [selected, setSelected] = useState("All Snippets");
+  
+  // Real project implementation: Store our created snippets globally!
+  const [globalSnippets, setGlobalSnippets] = useState<any[]>([]);
 
   useEffect(() => {
     if (isDark) {
@@ -43,8 +47,19 @@ export const Example = () => {
           <div className="flex-1 bg-white dark:bg-neutral-950 overflow-hidden flex flex-col h-screen">
             <FullScreenCalendar data={[]} isDark={isDark} setIsDark={setIsDark} />
           </div>
-        ) : (
+        ) : ["All Snippets", "Favorites", "Trash"].includes(selected) ? (
           <ExampleContent isDark={isDark} setIsDark={setIsDark} selected={selected} />
+        ) : (
+          <div className="flex-1 overflow-hidden h-screen bg-white dark:bg-[#09090b]">
+            <NewSnippet 
+              onCancel={() => setSelected("All Snippets")} 
+              existingSnippets={globalSnippets}
+              onSave={(snippetData: any) => {
+                 setGlobalSnippets([...globalSnippets, snippetData]);
+                 setSelected("All Snippets");
+              }}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -85,6 +100,22 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
     setCreatingItemType(null);
   };
 
+  const handleDeleteProject = (projectId: number) => {
+    setProjects(projects.filter(p => p.id !== projectId));
+  };
+
+  const handleDeleteItem = (projectId: number, itemId: number) => {
+    setProjects(projects.map(p => {
+      if (p.id === projectId) {
+        return {
+          ...p,
+          items: p.items.filter((i: any) => i.id !== itemId)
+        };
+      }
+      return p;
+    }));
+  };
+
   return (
     <nav className="flex w-72 flex-col bg-[#f8f9fa] dark:bg-[#111216] border-r border-gray-200 dark:border-neutral-800/60 h-full overflow-hidden">
 
@@ -99,7 +130,19 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
         <span className="text-[17px] font-bold text-gray-900 dark:text-[#f3f4f6] mt-0.5 tracking-tight">CodeSnippet</span>
       </div>
 
+      <div className="px-5 py-4">
+        <button
+          onClick={() => setSelected("New Snippet")}
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[14px] font-medium py-2.5 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-colors active:scale-[0.98]"
+        >
+          <Plus className="h-4 w-4 stroke-2" />
+          New Snippet
+        </button>
+      </div>
 
+      <div className="px-5 pb-2">
+        <h2 className="text-[11px] font-bold tracking-[0.12em] text-gray-500 uppercase px-2 mb-1">Navigation</h2>
+      </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-1.5 scrollbar-hide">
         <Option
@@ -141,15 +184,26 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
                   defaultExpanded
                   onNewFile={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("file"); setNewItemName(""); }}
                   onNewFolder={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("folder"); setNewItemName(""); }}
+                  onDelete={() => handleDeleteProject(proj.id)}
                 >
                   {/* Render Items */}
                   {proj.items?.map((item: any) => (
                     item.type === "folder" ? (
-                      <ProjectFolder key={item.id} title={item.name}>
+                      <ProjectFolder
+                        key={item.id}
+                        title={item.name}
+                        onDelete={() => handleDeleteItem(proj.id, item.id)}
+                      >
                         <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty</div>
                       </ProjectFolder>
                     ) : (
-                      <ProjectFile key={item.id} title={item.name} selected={selected} setSelected={setSelected} />
+                      <ProjectFile
+                        key={item.id}
+                        title={item.name}
+                        selected={selected}
+                        setSelected={setSelected}
+                        onDelete={() => handleDeleteItem(proj.id, item.id)}
+                      />
                     )
                   ))}
 
@@ -299,7 +353,7 @@ const CollapsibleGroup = ({ title, Icon, children, defaultExpanded = false }: an
   );
 };
 
-const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, onNewFolder }: any) => {
+const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, onNewFolder, onDelete }: any) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
   return (
     <div className="flex flex-col group">
@@ -323,6 +377,11 @@ const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, on
               <FolderPlus className="h-3.5 w-3.5" />
             </button>
           )}
+          {onDelete && (
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-red-200 dark:hover:bg-red-900/40 rounded text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Delete">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
       {expanded && (
@@ -334,21 +393,32 @@ const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, on
   );
 };
 
-const ProjectFile = ({ title, Icon = FileText, selected, setSelected }: any) => {
+const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }: any) => {
   const isSelected = selected === title;
   return (
-    <button
-      onClick={() => setSelected(title)}
-      className={`relative flex h-8 w-full items-center justify-between rounded-md px-2 transition-colors ${isSelected
-        ? "bg-gray-200/60 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-200/40 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
-        }`}
-    >
-      <div className="flex items-center gap-2 pl-4">
-        <Icon className={`h-4 w-4 ${isSelected ? "text-gray-900 dark:text-white" : "text-gray-400"}`} />
-        <span className="text-[14px] pt-[1px]">{title}</span>
-      </div>
-    </button>
+    <div className="flex flex-col group relative">
+      <button
+        onClick={() => setSelected(title)}
+        className={`relative flex h-8 w-full items-center justify-between rounded-md px-2 transition-colors ${isSelected
+          ? "bg-gray-200/60 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-200/40 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
+          }`}
+      >
+        <div className="flex items-center gap-2 pl-4">
+          <Icon className={`h-4 w-4 ${isSelected ? "text-gray-900 dark:text-white" : "text-gray-400"}`} />
+          <span className="text-[14px] pt-[1px]">{title}</span>
+        </div>
+      </button>
+      {onDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="absolute right-2 top-1.5 hidden group-hover:flex p-1 hover:bg-red-200 dark:hover:bg-red-900/40 rounded text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+          title="Delete"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
   );
 };
 
