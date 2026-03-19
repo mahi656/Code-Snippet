@@ -11,7 +11,6 @@ import {
   Sun,
   ChevronDown,
   ChevronRight,
-  Bell,
   Search,
   Calendar,
   FileCode2,
@@ -27,7 +26,7 @@ import NewSnippet from "../Snippet/NewSnippet.jsx";
 export const Example = () => {
   const [isDark, setIsDark] = useState(false);
   const [selected, setSelected] = useState("All Snippets");
-  
+
   // Real project implementation: Store our created snippets globally!
   const [globalSnippets, setGlobalSnippets] = useState<any[]>([]);
 
@@ -51,12 +50,12 @@ export const Example = () => {
           <ExampleContent isDark={isDark} setIsDark={setIsDark} selected={selected} />
         ) : (
           <div className="flex-1 overflow-hidden h-screen bg-white dark:bg-[#09090b]">
-            <NewSnippet 
-              onCancel={() => setSelected("All Snippets")} 
+            <NewSnippet
+              onCancel={() => setSelected("All Snippets")}
               existingSnippets={globalSnippets}
               onSave={(snippetData: any) => {
-                 setGlobalSnippets([...globalSnippets, snippetData]);
-                 setSelected("All Snippets");
+                setGlobalSnippets([...globalSnippets, snippetData]);
+                setSelected("All Snippets");
               }}
             />
           </div>
@@ -209,8 +208,8 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
 
                   {/* Inline Input for New Item directly inside project */}
                   {creatingItemInProjectId === proj.id && (
-                    <div className="flex items-center gap-2 px-1 py-1 ml-1 mt-0.5 border border-blue-500 rounded bg-white dark:bg-[#1a1b1e]">
-                      {creatingItemType === "folder" ? <Folder className="h-3 w-3 text-blue-500 shrink-0" /> : <FileText className="h-3 w-3 text-blue-500 shrink-0" />}
+                    <div className="flex items-center gap-2 px-1 py-1 ml-1 mt-0.5 border border-blue-600 rounded bg-white dark:bg-[#1a1b1e]">
+                      {creatingItemType === "folder" ? <Folder className="h-3 w-3 text-blue-600 shrink-0" /> : <FileText className="h-3 w-3 text-blue-600 shrink-0" />}
                       <input
                         autoFocus
                         value={newItemName}
@@ -238,8 +237,8 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
 
               {/* Inline Input for New Project */}
               {isCreatingProject ? (
-                <div className="flex items-center gap-2 px-2 py-1.5 mx-1 mt-1 border border-blue-500 rounded-md bg-white dark:bg-[#1a1b1e] shadow-sm">
-                  <Folder className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                <div className="flex items-center gap-2 px-2 py-1.5 mx-1 mt-1 border border-blue-600 rounded-md bg-white dark:bg-[#1a1b1e] shadow-sm">
+                  <Folder className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                   <input
                     autoFocus
                     value={newProjectName}
@@ -295,7 +294,7 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2563eb] text-white font-medium text-sm shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white font-medium text-sm shadow-sm">
               U
             </div>
             <span className="text-[14px] font-medium text-gray-900 dark:text-gray-200 tracking-tight">
@@ -363,7 +362,7 @@ const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, on
           className="flex flex-1 items-center gap-2 outline-none"
         >
           <ChevronRight className={`h-[14px] w-[14px] text-gray-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
-          {expanded ? <FolderOpen className="h-4 w-4 text-blue-500" /> : <Folder className="h-4 w-4 text-blue-400 dark:text-blue-500" />}
+          {expanded ? <FolderOpen className="h-4 w-4 text-blue-600" /> : <Folder className="h-4 w-4 text-blue-500" />}
           <span className="text-[14px] pt-[1px] font-medium">{title}</span>
         </button>
         <div className="hidden group-hover:flex items-center gap-1">
@@ -433,12 +432,8 @@ const ExampleContent = ({ isDark, setIsDark, selected }: any) => {
         <div className="flex items-center gap-5">
           <div className="relative flex items-center">
             <Search className="absolute left-3.5 h-[18px] w-[18px] text-gray-400" />
-            <input type="text" placeholder="Search..." className="h-10 w-72 rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:text-white transition-all placeholder:text-gray-400" />
+            <input type="text" placeholder="Search..." className="h-10 w-72 rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400" />
           </div>
-          <button className="relative p-2.5 rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#111216] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2.5 w-2.5 border-2 border-white dark:border-[#111216] bg-blue-500 rounded-full"></span>
-          </button>
         </div>
       </div>
 

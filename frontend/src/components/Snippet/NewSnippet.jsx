@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, X, Code, Tag, Folder, AlignLeft, ChevronDown } from 'lucide-react';
+import { Save, X, Code, Tag, Folder, AlignLeft, ChevronDown, Layers, Package, Link, Globe, Lock } from 'lucide-react';
 import ErrorMessage from '../Error/DuplicateError.jsx';
 
 const LANGUAGES = [
@@ -28,13 +28,34 @@ const LANGUAGES = [
   { value: "markdown", label: "Markdown" },
 ];
 
+const FRAMEWORKS = [
+  { value: "none", label: "None / Vanilla" },
+  { value: "react", label: "React / RN" },
+  { value: "nextjs", label: "Next.js" },
+  { value: "express", label: "Express" },
+  { value: "django", label: "Django" },
+  { value: "spring", label: "Spring Boot" },
+  { value: "vue", label: "Vue / Nuxt" }
+];
+
+const VISIBILITY_OPTIONS = [
+  { value: "public", label: "Public (Shared with team)" },
+  { value: "private", label: "Private (Only me)" }
+];
+
 export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const [isFrameworkDropdownOpen, setIsFrameworkDropdownOpen] = useState(false);
+  const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
   const [errorText, setErrorText] = useState("");
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     language: 'javascript',
+    framework: 'none',
+    visibility: 'public',
+    dependencies: '',
+    referenceLink: '',
     code: '',
     tags: '',
   });
@@ -132,7 +153,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g., JWT Authentication Middleware"
-                className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] px-4 text-[15px] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600 shadow-sm"
+                className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] px-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600 shadow-sm"
               />
             </div>
 
@@ -146,7 +167,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 <button
                   type="button"
                   onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:text-white transition-all text-left"
+                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all text-left"
                 >
                   <span className="truncate">{LANGUAGES.find(l => l.value === formData.language)?.label || 'Select Language'}</span>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} />
@@ -175,6 +196,45 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
               </div>
             </div>
 
+            {/* Framework Selection */}
+            <div className="space-y-2 relative">
+              <label htmlFor="framework" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                Framework <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+              </label>
+              <div className="relative shadow-sm rounded-xl">
+                <Layers className="absolute left-3.5 top-[13px] h-[18px] w-[18px] text-gray-400 pointer-events-none z-10" />
+                <button
+                  type="button"
+                  onClick={() => setIsFrameworkDropdownOpen(!isFrameworkDropdownOpen)}
+                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all text-left"
+                >
+                  <span className="truncate">{FRAMEWORKS.find(f => f.value === formData.framework)?.label || 'None / Vanilla'}</span>
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isFrameworkDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isFrameworkDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsFrameworkDropdownOpen(false)}></div>
+                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#111216] border border-gray-200 dark:border-neutral-800/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
+                      {FRAMEWORKS.map(fw => (
+                        <button
+                          key={fw.value}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, framework: fw.value }));
+                            setIsFrameworkDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.framework === fw.value ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
+                        >
+                          {fw.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Tags Input */}
             <div className="space-y-2">
               <label htmlFor="tags" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
@@ -189,7 +249,87 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   value={formData.tags}
                   onChange={handleChange}
                   placeholder="e.g. react, hooks, ui..."
-                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
+                />
+              </div>
+            </div>
+
+            {/* Visibility */}
+            <div className="space-y-2 relative">
+              <label htmlFor="visibility" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                Visibility
+              </label>
+              <div className="relative shadow-sm rounded-xl">
+                {formData.visibility === 'public' ?
+                  <Globe className="absolute left-3.5 top-[13px] h-[18px] w-[18px] text-gray-400 pointer-events-none z-10" /> :
+                  <Lock className="absolute left-3.5 top-[13px] h-[18px] w-[18px] text-gray-400 pointer-events-none z-10" />
+                }
+                <button
+                  type="button"
+                  onClick={() => setIsVisibilityDropdownOpen(!isVisibilityDropdownOpen)}
+                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all text-left"
+                >
+                  <span className="truncate">{VISIBILITY_OPTIONS.find(v => v.value === formData.visibility)?.label || 'Public (Shared with team)'}</span>
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isVisibilityDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isVisibilityDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsVisibilityDropdownOpen(false)}></div>
+                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#111216] border border-gray-200 dark:border-neutral-800/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
+                      {VISIBILITY_OPTIONS.map(vis => (
+                        <button
+                          key={vis.value}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, visibility: vis.value }));
+                            setIsVisibilityDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.visibility === vis.value ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
+                        >
+                          {vis.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Dependencies */}
+            <div className="space-y-2">
+              <label htmlFor="dependencies" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                Dependencies <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+              </label>
+              <div className="relative shadow-sm rounded-xl">
+                <Package className="absolute left-3.5 top-3.5 h-[18px] w-[18px] text-gray-400" />
+                <input
+                  type="text"
+                  id="dependencies"
+                  name="dependencies"
+                  value={formData.dependencies}
+                  onChange={handleChange}
+                  placeholder="e.g. npm install lucide-react"
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
+                />
+              </div>
+            </div>
+
+            {/* Reference Link */}
+            <div className="space-y-2">
+              <label htmlFor="referenceLink" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                Ext. Reference Link <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+              </label>
+              <div className="relative shadow-sm rounded-xl">
+                <Link className="absolute left-3.5 top-3.5 h-[18px] w-[18px] text-gray-400" />
+                <input
+                  type="url"
+                  id="referenceLink"
+                  name="referenceLink"
+                  value={formData.referenceLink}
+                  onChange={handleChange}
+                  placeholder="https://stackoverflow.com/..."
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
                 />
               </div>
             </div>
@@ -208,7 +348,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   value={formData.description}
                   onChange={handleChange}
                   placeholder="Briefly describe what this snippet does..."
-                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
                 />
               </div>
             </div>
@@ -220,7 +360,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   Snippet Code <span className="text-red-500">*</span>
                 </label>
               </div>
-              <div className="relative rounded-xl border border-gray-200 dark:border-neutral-800/60 overflow-hidden bg-[#fafafa] dark:bg-[#0d0e12] focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all shadow-sm">
+              <div className="relative rounded-xl border border-gray-200 dark:border-neutral-800/60 overflow-hidden bg-[#fafafa] dark:bg-[#0d0e12] focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600/20 transition-all shadow-sm">
 
                 {/* Editor Header like MacOS */}
                 <div className="flex items-center px-4 py-2.5 border-b border-gray-200 dark:border-neutral-800/60 bg-gray-50 dark:bg-[#111216]">

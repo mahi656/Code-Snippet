@@ -265,7 +265,7 @@ export function FullScreenCalendar({ data = [], isDark, setIsDark }: FullScreenC
                   <div className="mt-auto flex flex-wrap justify-center gap-0.5 px-1 pb-1">
                     {data.filter((d) => isSameDay(d.day, day)).map((dayData) =>
                       dayData.events.map((event) => (
-                        <span key={event.id} className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        <span key={event.id} className="h-1.5 w-1.5 rounded-full bg-blue-600" />
                       ))
                     )}
                   </div>
