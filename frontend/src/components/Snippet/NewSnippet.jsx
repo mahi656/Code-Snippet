@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Save, X, Code, Tag, Folder, AlignLeft, ChevronDown, Layers, Package, Link, Globe, Lock } from 'lucide-react';
+import { Save, X, Code, Tag, AlignLeft, ChevronDown, Layers, Package, Link, Globe, Lock } from 'lucide-react';
+import Editor from '@monaco-editor/react';
 import ErrorMessage from '../Error/DuplicateError.jsx';
 
 const LANGUAGES = [
@@ -44,10 +45,17 @@ const VISIBILITY_OPTIONS = [
 ];
 
 export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) {
+  // --- This part stores all the "live" data for our form ---
+
+  // These three variables keep track of whether our dropdown menus are open or closed
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isFrameworkDropdownOpen, setIsFrameworkDropdownOpen] = useState(false);
   const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
+  
+  // This stores any error message we want to show the user (like "Title is required")
   const [errorText, setErrorText] = useState("");
+  
+  // This is one big object that holds all the information the user types into the form
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -56,45 +64,55 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
     visibility: 'public',
     dependencies: '',
     referenceLink: '',
-    code: '',
+    code: '// Start coding here...',
     tags: '',
   });
 
+  // This function updates our formData whenever a user types in a normal text box
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setErrorText("");
+  // This is a special function just for the Monaco Editor part
+  // It updates the "code" section of our form data
+  const handleEditorChange = (value) => {
+    setFormData(prev => ({ ...prev, code: value || '' }));
+  };
 
+  // This function runs when the user clicks the "Save Snippet" button
+  const handleSubmit = (e) => {
+    e.preventDefault(); // This stops the page from refreshing
+    setErrorText(""); // Clear any old errors
+
+    // Step 1: Check if the user forgot to give the snippet a name
     if (!formData.title.trim()) {
       setErrorText("Snippet Title is required.");
       return;
     }
 
-    //REAL DUPLICATE CHECKING LOGIC
-    const snippetsToCheck = existingSnippets
-    const isDuplicateTitle = snippetsToCheck.some(
+    // Step 2: Check if this name is already taken by another snippet
+    const isDuplicateTitle = existingSnippets.some(
       (snippet) => snippet.title.toLowerCase() === formData.title.trim().toLowerCase()
-    )
+    );
 
     if (isDuplicateTitle) {
       setErrorText(`Wait! A snippet with the title "${formData.title.trim()}" already exists.`);
       return;
     }
 
-    // Check for exact same CODE
-    const isDuplicateCode = snippetsToCheck.some(
+    // Step 3: Check if the user is trying to save the exact same code twice
+    const isDuplicateCode = existingSnippets.some(
       (snippet) => snippet.code.trim() === formData.code.trim()
     );
 
     if (isDuplicateCode) {
-      setErrorText("Oops! This EXACT code is already saved in another snippet. Try pasting something new!");
+      setErrorText("Oops! This EXACT code is already saved in another snippet.");
       return;
     }
 
+    // Step 4: If everything is okay, we save the snippet
+    // We also turn the "tags" string into a clean list (array) here
     if (onSave) {
       onSave({
         ...formData,
@@ -135,7 +153,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
 
       {/* Main Form Content */}
       <div className="flex-1 overflow-auto p-8">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6 pb-12">
           <ErrorMessage message={errorText} onClose={() => setErrorText("")} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -211,7 +229,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   <span className="truncate">{FRAMEWORKS.find(f => f.value === formData.framework)?.label || 'None / Vanilla'}</span>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isFrameworkDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {isFrameworkDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsFrameworkDropdownOpen(false)}></div>
@@ -353,14 +371,14 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
               </div>
             </div>
 
-            {/* Code Textarea mimicking IDE */}
+            {/* Monaco Editor Container */}
             <div className="space-y-2 md:col-span-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="code" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
                   Snippet Code <span className="text-red-500">*</span>
                 </label>
               </div>
-              <div className="relative rounded-xl border border-gray-200 dark:border-neutral-800/60 overflow-hidden bg-[#fafafa] dark:bg-[#0d0e12] focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600/20 transition-all shadow-sm">
+              <div className="rounded-xl border border-gray-200 dark:border-neutral-800/60 overflow-hidden bg-[#fafafa] dark:bg-[#0d0e12] transition-all shadow-sm">
 
                 {/* Editor Header like MacOS */}
                 <div className="flex items-center px-4 py-2.5 border-b border-gray-200 dark:border-neutral-800/60 bg-gray-50 dark:bg-[#111216]">
@@ -374,21 +392,39 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   </div>
                 </div>
 
-                {/* Editor Body */}
-                <textarea
-                  id="code"
-                  name="code"
-                  required
-                  value={formData.code}
-                  onChange={handleChange}
-                  placeholder="// Paste or write your awesome code here..."
-                  className="w-full min-h-[300px] p-5 bg-transparent text-[14px] leading-relaxed font-mono outline-none dark:text-gray-300 resize-y placeholder:text-gray-400 dark:placeholder:text-neutral-600 selection:bg-blue-200 dark:selection:bg-blue-900/50"
-                  spellCheck="false"
-                />
+                {/* Monaco Editor Component */}
+                <div className="h-[400px] w-full">
+                  <Editor
+                    height="100%"
+                    defaultLanguage="javascript"
+                    language={formData.language === 'react' ? 'javascript' : formData.language}
+                    theme="vs-dark"
+                    value={formData.code}
+                    onChange={handleEditorChange}
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineHeight: 22,
+                      fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      padding: { top: 16, bottom: 16 },
+                      scrollbar: {
+                        vertical: 'visible',
+                        horizontal: 'visible',
+                        useShadows: false,
+                        verticalHasArrows: false,
+                        horizontalHasArrows: false,
+                        verticalScrollbarSize: 10,
+                        horizontalScrollbarSize: 10,
+                      },
+                      cursorSmoothCaretAnimation: "on",
+                      smoothScrolling: true,
+                    }}
+                  />
+                </div>
               </div>
             </div>
-
-
 
           </div>
         </form>
