@@ -45,16 +45,16 @@ const VISIBILITY_OPTIONS = [
 ];
 
 export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) {
-  // --- This part stores all the "live" data for our form ---
+  //This part stores all the "live" data for our form
 
   // These three variables keep track of whether our dropdown menus are open or closed
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isFrameworkDropdownOpen, setIsFrameworkDropdownOpen] = useState(false);
   const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
-  
+
   // This stores any error message we want to show the user (like "Title is required")
   const [errorText, setErrorText] = useState("");
-  
+
   // This is one big object that holds all the information the user types into the form
   const [formData, setFormData] = useState({
     title: '',
@@ -393,6 +393,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 </div>
 
                 {/* Monaco Editor Component */}
+                {/* this code is for writing code (including it's css) */}
                 <div className="h-[400px] w-full">
                   <Editor
                     height="100%"

@@ -16,11 +16,14 @@ export const Login = () => {
       className="w-full h-screen bg-black"
     >
       <FullSignInPage
-        title={<span className="font-light text-foreground tracking-tighter">Welcome</span>}
+        title={<span className="font-light text-white tracking-tighter">Welcome</span>}
         description="Access your account and continue your journey with us"
         onSignIn={(e) => {
           e.preventDefault();
           navigate('/dashboard');
+        }}
+        onGithubSignIn={() => {
+          window.location.href = 'http://localhost:5000/auth/github';
         }}
         onCreateAccount={() => navigate('/signup')}
         heroImageSrc={photo}

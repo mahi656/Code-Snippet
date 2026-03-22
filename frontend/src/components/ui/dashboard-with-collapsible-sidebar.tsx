@@ -24,7 +24,7 @@ import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
 import NewSnippet from "../Snippet/NewSnippet.jsx";
 
 export const Example = () => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const [selected, setSelected] = useState("All Snippets");
 
   // Real project implementation: Store our created snippets globally!
