@@ -13,6 +13,11 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/OAuth': 'http://localhost:5001',
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

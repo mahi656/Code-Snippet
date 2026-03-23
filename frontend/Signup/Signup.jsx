@@ -23,7 +23,7 @@ export const Signup = () => {
                     // alert("Sign Up form submitted!");
                 }}
                 onGithubSignUp={() => {
-                    window.location.href = 'http://localhost:5000/auth/github';
+                    window.location.href = '/OAuth/github';
                 }}
                 onSignIn={() => navigate('/login')}
                 heroImageSrc={photo}

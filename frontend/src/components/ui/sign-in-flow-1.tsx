@@ -380,9 +380,11 @@ export const SignInPage: React.FC<SignInPageProps> = ({ className }) => {
                                         <h1 className="text-[2.5rem] font-bold leading-[1.1] tracking-tight text-white">Welcome Developer</h1>
                                         <p className="text-[1.8rem] text-white/70 font-light">Your sign in component</p>
                                     </div>
-
+                                    {/* button to login via github */}
                                     <div className="space-y-4">
-                                        <button className="backdrop-blur-[2px] w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-full py-3 px-4 transition-colors">
+                                        <button
+                                            onClick={() => window.location.href = '/OAuth/github'}
+                                            className="backdrop-blur-[2px] w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-full py-3 px-4 transition-colors">
                                             <Github className="w-5 h-5" />
                                             <span>Continue with GitHub</span>
                                         </button>
