@@ -109,9 +109,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setLoginMode('qr')}
-                                className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 cursor-pointer ${
-                                    loginMode === 'qr' ? 'bg-[#27272a] text-white' : 'text-[#52525b] hover:text-[#a1a1aa]'
-                                }`}
+                                className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 cursor-pointer ${loginMode === 'qr' ? 'bg-[#27272a] text-white' : 'text-[#52525b] hover:text-[#a1a1aa]'
+                                    }`}
                             >
                                 <QrCode className="w-4 h-4" />
                                 QR Login
@@ -119,9 +118,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setLoginMode('email')}
-                                className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 cursor-pointer ${
-                                    loginMode === 'email' ? 'bg-[#27272a] text-white' : 'text-[#52525b] hover:text-[#a1a1aa]'
-                                }`}
+                                className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 cursor-pointer ${loginMode === 'email' ? 'bg-[#27272a] text-white' : 'text-[#52525b] hover:text-[#a1a1aa]'
+                                    }`}
                             >
                                 <Mail className="w-4 h-4" />
                                 Email Login
