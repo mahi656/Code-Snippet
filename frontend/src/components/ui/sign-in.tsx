@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState } from 'react';
 import { Eye, EyeOff, Github, QrCode, Mail, Smartphone } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
-import { v4 as uuidv4 } from 'uuid';
+import { motion } from 'framer-motion';
+
+import Side1 from '../../Photos/Side1.png';
+import Side2 from '../../Photos/Side2.png';
+import { QRPanel } from '../../../Login/QRPanel';
 
 const GithubIcon = () => (
     <Github className="h-5 w-5" />
@@ -23,7 +26,7 @@ interface SignInPageProps {
 // --- SUB-COMPONENTS ---
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="rounded-xl border border-[#27272a] bg-[#121212] transition-colors focus-within:border-white focus-within:bg-[#18181b]">
+    <div className="rounded-lg border border-[#27272a] bg-[#09090b] transition-all hover:bg-[#121212] focus-within:border-[#a78bfa] focus-within:ring-1 focus-within:ring-[#a78bfa]/50">
         {children}
     </div>
 );
@@ -43,57 +46,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [loginMode, setLoginMode] = useState<'qr' | 'email'>('qr');
-
-    // --- QR Login State ---
-    const [qrToken, setQrToken] = useState(uuidv4());
-    const [qrState, setQrState] = useState<'waiting' | 'success' | 'expired'>('waiting');
-    const [qrCountdown, setQrCountdown] = useState(18);
-    const pollRef = useRef<any>(null);
-    const expiryRef = useRef<any>(null);
-    const tickRef = useRef<any>(null);
-
-    const clearQrTimers = useCallback(() => {
-        if (pollRef.current) clearTimeout(pollRef.current);
-        if (expiryRef.current) clearTimeout(expiryRef.current);
-        if (tickRef.current) clearInterval(tickRef.current);
-    }, []);
-
-    const startQrSession = useCallback(() => {
-        clearQrTimers();
-        const newToken = uuidv4();
-        setQrToken(newToken);
-        setQrState('waiting');
-        setQrCountdown(18);
-
-        // countdown tick
-        tickRef.current = setInterval(() => {
-            setQrCountdown(prev => {
-                if (prev <= 1) { clearInterval(tickRef.current); return 0; }
-                return prev - 1;
-            });
-        }, 1000);
-
-        // mock: auto-login after 7s
-        pollRef.current = setTimeout(() => {
-            setQrState('success');
-            clearQrTimers();
-            // redirect after showing success
-            setTimeout(() => onSignIn?.({} as any), 1500);
-        }, 7000);
-
-        // expire after 18s
-        expiryRef.current = setTimeout(() => {
-            clearTimeout(pollRef.current);
-            clearInterval(tickRef.current);
-            setQrState('expired');
-            setQrCountdown(0);
-        }, 18000);
-    }, [clearQrTimers, onSignIn]);
-
-    useEffect(() => {
-        if (loginMode === 'qr') startQrSession();
-        return clearQrTimers;
-    }, [loginMode]);
 
     return (
         <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw] bg-black">
@@ -131,12 +83,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                             <div className="mt-4 space-y-5">
                                 <div className="flex items-center gap-3">
                                     <Smartphone className="w-5 h-5 text-[#a78bfa]" />
-                                    <p className="text-[15px] text-[#e4e4e7]">Scan this QR code using your mobile to login</p>
+                                    <p className="text-[15px] text-[#e4e4e7]">Scan this QR code using your mobile's camera</p>
                                 </div>
                                 <div className="space-y-3 text-[14px] text-[#a1a1aa]">
-                                    <p>1. Open the <span className="text-white">Code Snippet</span> app on your phone</p>
-                                    <p>2. Go to <span className="text-white">Settings → Scan QR</span></p>
-                                    <p>3. Point your camera at the QR code</p>
+                                    <p>1. Open the camera app on your phone</p>
+                                    <p>2. Point it at the QR code on the screen</p>
+                                    <p>3. Tap the link that appears to authenticate securely</p>
                                 </div>
 
                                 <div className="relative flex items-center justify-center mt-4">
@@ -158,21 +110,21 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                         {/* Email Login Mode - original form */}
                         {loginMode === 'email' && (
                             <>
-                                <form className="space-y-6 mt-4" onSubmit={onSignIn}>
+                                <form className="space-y-4 mt-6" onSubmit={onSignIn}>
                                     <div className="animate-element animate-delay-300">
-                                        <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Email Address</label>
+                                        <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Email <span className="text-red-500">*</span></label>
                                         <GlassInputWrapper>
-                                            <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-[18px] rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
+                                            <input name="email" type="email" placeholder="john@example.com" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
                                         </GlassInputWrapper>
                                     </div>
 
                                     <div className="animate-element animate-delay-400">
-                                        <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Password</label>
+                                        <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Password <span className="text-red-500">*</span></label>
                                         <GlassInputWrapper>
                                             <div className="relative">
-                                                <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-[18px] pr-12 rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
-                                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-4 flex items-center">
-                                                    {showPassword ? <EyeOff strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" /> : <Eye strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" />}
+                                                <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-[14px] px-4 py-3 pr-10 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center">
+                                                    {showPassword ? <EyeOff strokeWidth={2} className="w-[18px] h-[18px] text-[#52525b] hover:text-[#a1a1aa] transition-colors" /> : <Eye strokeWidth={2} className="w-[18px] h-[18px] text-[#52525b] hover:text-[#a1a1aa] transition-colors" />}
                                                 </button>
                                             </div>
                                         </GlassInputWrapper>
@@ -180,15 +132,15 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
                                     <div className="animate-element animate-delay-500 flex items-center justify-between text-sm pt-2">
                                         <label className="flex items-center gap-3 cursor-pointer group">
-                                            <div className="w-[18px] h-[18px] rounded-full border border-[#3f3f46] flex items-center justify-center group-hover:border-[#71717a] transition-colors">
+                                            <div className="w-4 h-4 rounded-md border border-[#3f3f46] flex items-center justify-center group-hover:border-[#71717a] transition-colors bg-[#0f0f0f]">
                                                 <input type="checkbox" name="rememberMe" className="opacity-0 absolute w-0 h-0" />
                                             </div>
-                                            <span className="text-[#f4f4f5] text-[15px]">Keep me signed in</span>
+                                            <span className="text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors text-[13px]">Keep me signed in</span>
                                         </label>
-                                        <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="text-[#a78bfa] hover:text-[#c4b5fd] text-[15px] transition-colors">Reset password</a>
+                                        <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="text-[#a78bfa] hover:text-[#c4b5fd] text-[13px] transition-colors font-medium">Reset password?</a>
                                     </div>
 
-                                    <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-[#e5e5e5] hover:bg-white py-[18px] font-medium text-black transition-colors mt-6 text-[16px]">
+                                    <button type="submit" className="animate-element animate-delay-600 w-full rounded-lg bg-white/90 hover:bg-white py-3 font-medium text-black transition-colors mt-4 text-[14px] shadow-lg shadow-white/5">
                                         Sign In
                                     </button>
                                 </form>
@@ -198,7 +150,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                                     <span className="px-5 text-[14px] text-[#a1a1aa] bg-black absolute">Or continue with</span>
                                 </div>
 
-                                <button onClick={onGithubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-[#27272a] rounded-2xl py-[18px] hover:bg-[#121212] transition-colors text-white font-medium mt-2 text-[16px]">
+                                <button onClick={onGithubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-2 border border-[#27272a] rounded-lg py-3 hover:bg-[#121212] transition-colors text-white font-medium mt-2 text-[14px]">
                                     <GithubIcon />
                                     Continue with GitHub
                                 </button>
@@ -212,80 +164,38 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 </div>
             </section>
 
-            {/* Right column: hero image OR QR code */}
+            {/* Right column: Overlapping Images OR QR code */}
             <section className="hidden md:block flex-1 relative p-4">
-                {loginMode === 'email' && heroImageSrc ? (
-                    <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
-                ) : loginMode === 'qr' ? (
-                    <div className="absolute inset-4 rounded-3xl bg-[#0a0a0a] border border-[#27272a] flex flex-col items-center justify-center gap-6">
-                        {/* QR Waiting State */}
-                        {qrState === 'waiting' && (
-                            <>
-                                <div className="relative group">
-                                    <div className="absolute -inset-4 rounded-2xl bg-gradient-to-br from-[#a78bfa]/20 via-[#7c3aed]/10 to-[#c4b5fd]/20 blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
-                                    <div className="relative bg-white p-5 rounded-2xl shadow-2xl">
-                                        <QRCodeSVG
-                                            value={`${window.location.origin}/qr-login?token=${qrToken}`}
-                                            size={200}
-                                            level="H"
-                                            bgColor="#ffffff"
-                                            fgColor="#0f0f0f"
-                                        />
-                                    </div>
-                                </div>
-                                {/* Progress bar */}
-                                <div className="w-52 h-1.5 bg-[#27272a] rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full rounded-full transition-all duration-1000 ease-linear"
-                                        style={{
-                                            width: `${(qrCountdown / 18) * 100}%`,
-                                            background: qrCountdown > 5 ? 'linear-gradient(90deg, #a78bfa, #7c3aed)' : 'linear-gradient(90deg, #ef4444, #f97316)',
-                                        }}
-                                    />
-                                </div>
-                                {/* Scanning indicator */}
-                                <div className="flex items-center gap-2.5">
-                                    <div className="relative flex h-2.5 w-2.5">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#a78bfa] opacity-75" />
-                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#a78bfa]" />
-                                    </div>
-                                    <p className="text-sm text-[#a1a1aa]">Waiting for scan… <span className="text-[#52525b] font-mono">{qrCountdown}s</span></p>
-                                </div>
-                            </>
-                        )}
+                {loginMode === 'email' ? (
+                    <div className="absolute inset-4 rounded-3xl overflow-hidden flex items-center justify-center">
+                        {/* Abstract glows */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-[#a78bfa]/10 rounded-full blur-[100px]" />
+                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#7c3aed]/10 rounded-full blur-[100px]" />
 
-                        {/* QR Success State */}
-                        {qrState === 'success' && (
-                            <div className="flex flex-col items-center gap-5">
-                                <div className="relative">
-                                    <div className="absolute -inset-4 rounded-full bg-emerald-500/20 blur-xl animate-pulse" />
-                                    <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
-                                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
-                                    </div>
-                                </div>
-                                <h3 className="text-xl font-medium text-emerald-400">Login Successful!</h3>
-                                <p className="text-sm text-[#a1a1aa]">Redirecting to dashboard…</p>
-                                <div className="w-5 h-5 border-2 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin" />
-                            </div>
-                        )}
-
-                        {/* QR Expired State */}
-                        {qrState === 'expired' && (
-                            <div className="flex flex-col items-center gap-5">
-                                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-orange-400/20 to-red-500/20 border border-orange-500/30 flex items-center justify-center">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                                </div>
-                                <h3 className="text-xl font-medium text-orange-400">QR Code Expired</h3>
-                                <p className="text-sm text-[#a1a1aa]">This code is no longer valid.</p>
-                                <button
-                                    onClick={startQrSession}
-                                    className="rounded-2xl bg-[#e5e5e5] hover:bg-white py-3 px-8 font-medium text-black transition-colors text-[15px] cursor-pointer"
-                                >
-                                    ↻ Regenerate QR Code
-                                </button>
-                            </div>
-                        )}
+                        {/* Image composition */}
+                        <div className="relative w-full max-w-[450px] aspect-square flex items-center justify-center">
+                            <motion.div 
+                                initial={{ opacity: 0, x: -60, y: 30, rotate: -5 }}
+                                animate={{ opacity: 1, x: -30, y: 20, rotate: -2 }}
+                                transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+                                className="absolute top-4 left-4 w-3/5 aspect-[4/5] z-10 hover:z-30 transition-all duration-300 hover:scale-105 cursor-pointer"
+                            >
+                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-black/50 to-transparent z-10 pointer-events-none" />
+                                <img src={Side1} alt="Preview 1" className="w-full h-full object-cover rounded-2xl shadow-2xl border border-white/5" />
+                            </motion.div>
+                            
+                            <motion.div 
+                                initial={{ opacity: 0, x: 60, y: -30, rotate: 5 }}
+                                animate={{ opacity: 1, x: 30, y: -20, rotate: 3 }}
+                                transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                                className="absolute bottom-4 right-4 w-3/5 aspect-[4/5] z-20 hover:z-30 transition-all duration-300 hover:scale-105 cursor-pointer"
+                            >
+                                <img src={Side2} alt="Preview 2" className="w-full h-full object-cover rounded-2xl shadow-2xl shadow-black/50 border border-white/5" />
+                            </motion.div>
+                        </div>
                     </div>
+                ) : loginMode === 'qr' ? (
+                    <QRPanel onLoginSuccess={() => onSignIn?.({} as any)} />
                 ) : null}
             </section>
         </div>

@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Github } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+import Side1 from '../../Photos/Side1.png';
+import Side2 from '../../Photos/Side2.png';
 
 const GithubIcon = () => (
     <Github className="h-5 w-5" />
@@ -20,7 +24,7 @@ interface SignUpPageProps {
 // --- SUB-COMPONENTS ---
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="rounded-xl border border-[#27272a] bg-[#121212] transition-colors focus-within:border-white focus-within:bg-[#18181b]">
+    <div className="rounded-lg border border-[#27272a] bg-[#09090b] transition-all hover:bg-[#121212] focus-within:border-[#a78bfa] focus-within:ring-1 focus-within:ring-[#a78bfa]/50">
         {children}
     </div>
 );
@@ -49,46 +53,42 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                         <h1 className="animate-element animate-delay-100 text-5xl font-normal leading-tight text-white mb-2">{title}</h1>
                         <p className="animate-element animate-delay-200 text-[#a1a1aa] text-[15px]">{description}</p>
 
-                        <form className="space-y-4 mt-4" onSubmit={onSignUp}>
-                            <div className="animate-element animate-delay-300">
-                                <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Full Name</label>
-                                <GlassInputWrapper>
-                                    <input name="fullName" type="text" placeholder="Enter your full name" className="w-full bg-transparent text-sm p-[18px] rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
-                                </GlassInputWrapper>
-                            </div>
-
-                            <div className="animate-element animate-delay-300">
-                                <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Email Address</label>
-                                <GlassInputWrapper>
-                                    <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-[18px] rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
-                                </GlassInputWrapper>
+                        <form className="space-y-4 mt-6" onSubmit={onSignUp}>
+                            <div className="grid grid-cols-2 gap-4 animate-element animate-delay-300">
+                                <div>
+                                    <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Full Name <span className="text-red-500">*</span></label>
+                                    <GlassInputWrapper>
+                                        <input name="fullName" type="text" placeholder="John Doe" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                    </GlassInputWrapper>
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Username <span className="text-red-500">*</span></label>
+                                    <GlassInputWrapper>
+                                        <input name="username" type="text" placeholder="johndoe" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                    </GlassInputWrapper>
+                                </div>
                             </div>
 
                             <div className="animate-element animate-delay-400">
-                                <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Password</label>
+                                <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Email <span className="text-red-500">*</span></label>
+                                <GlassInputWrapper>
+                                    <input name="email" type="email" placeholder="john@example.com" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                </GlassInputWrapper>
+                            </div>
+
+                            <div className="animate-element animate-delay-500">
+                                <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Password <span className="text-red-500">*</span></label>
                                 <GlassInputWrapper>
                                     <div className="relative">
-                                        <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Create a password" className="w-full bg-transparent text-sm p-[18px] pr-12 rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
-                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-4 flex items-center">
-                                            {showPassword ? <EyeOff strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" /> : <Eye strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" />}
+                                        <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Create a strong password" className="w-full bg-transparent text-[14px] px-4 py-3 pr-10 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center">
+                                            {showPassword ? <EyeOff strokeWidth={2} className="w-[18px] h-[18px] text-[#52525b] hover:text-[#a1a1aa] transition-colors" /> : <Eye strokeWidth={2} className="w-[18px] h-[18px] text-[#52525b] hover:text-[#a1a1aa] transition-colors" />}
                                         </button>
                                     </div>
                                 </GlassInputWrapper>
                             </div>
 
-                            <div className="animate-element animate-delay-400">
-                                <label className="block text-[14px] font-normal text-[#e4e4e7] mb-2">Confirm Password</label>
-                                <GlassInputWrapper>
-                                    <div className="relative">
-                                        <input name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your password" className="w-full bg-transparent text-sm p-[18px] pr-12 rounded-xl focus:outline-none text-white placeholder:text-[#52525b]" />
-                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-4 flex items-center">
-                                            {showConfirmPassword ? <EyeOff strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" /> : <Eye strokeWidth={1.5} className="w-5 h-5 text-[#52525b] hover:text-white transition-colors" />}
-                                        </button>
-                                    </div>
-                                </GlassInputWrapper>
-                            </div>
-
-                            <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-[#e5e5e5] hover:bg-white py-[18px] font-medium text-black transition-colors mt-4 text-[16px]">
+                            <button type="submit" className="animate-element animate-delay-600 w-full rounded-lg bg-white/90 hover:bg-white py-3 font-medium text-black transition-colors mt-4 text-[14px] shadow-lg shadow-white/5">
                                 Create Account
                             </button>
                         </form>
@@ -98,7 +98,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                             <span className="px-5 text-[14px] text-[#a1a1aa] bg-black absolute">Or continue with</span>
                         </div>
 
-                        <button onClick={onGithubSignUp} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-[#27272a] rounded-2xl py-[18px] hover:bg-[#121212] transition-colors text-white font-medium mt-2 text-[16px]">
+                        <button onClick={onGithubSignUp} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-2 border border-[#27272a] rounded-lg py-3 hover:bg-[#121212] transition-colors text-white font-medium mt-2 text-[14px]">
                             <GithubIcon />
                             Continue with GitHub
                         </button>
@@ -110,12 +110,36 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 </div>
             </section>
 
-            {/* Right column: hero image */}
-            {heroImageSrc && (
-                <section className="hidden md:block flex-1 relative p-4">
-                    <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
-                </section>
-            )}
+            {/* Right column: Overlapping Images */}
+            <section className="hidden md:block flex-1 relative p-4">
+                <div className="absolute inset-4 rounded-3xl overflow-hidden flex items-center justify-center">
+                    {/* Abstract glows */}
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#a78bfa]/10 rounded-full blur-[100px]" />
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#7c3aed]/10 rounded-full blur-[100px]" />
+
+                    {/* Image composition */}
+                    <div className="relative w-full max-w-[450px] aspect-square flex items-center justify-center">
+                        <motion.div 
+                            initial={{ opacity: 0, x: -60, y: 30, rotate: -5 }}
+                            animate={{ opacity: 1, x: -30, y: 20, rotate: -2 }}
+                            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+                            className="absolute top-4 left-4 w-3/5 aspect-[4/5] z-10 hover:z-30 transition-all duration-300 hover:scale-105 cursor-pointer"
+                        >
+                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-black/50 to-transparent z-10 pointer-events-none" />
+                            <img src={Side1} alt="Preview 1" className="w-full h-full object-cover rounded-2xl shadow-2xl border border-white/5" />
+                        </motion.div>
+                        
+                        <motion.div 
+                            initial={{ opacity: 0, x: 60, y: -30, rotate: 5 }}
+                            animate={{ opacity: 1, x: 30, y: -20, rotate: 3 }}
+                            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                            className="absolute bottom-4 right-4 w-3/5 aspect-[4/5] z-20 hover:z-30 transition-all duration-300 hover:scale-105 cursor-pointer"
+                        >
+                            <img src={Side2} alt="Preview 2" className="w-full h-full object-cover rounded-2xl shadow-2xl shadow-black/50 border border-white/5" />
+                        </motion.div>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 };
