@@ -18,14 +18,20 @@ import {
   Plus,
   FilePlus,
   FolderPlus,
+  Menu,
+  MoreVertical,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 
 import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
 import NewSnippet from "../Snippet/NewSnippet.jsx";
+import { ProfilePage } from "../../../Profile/Profile.jsx";
 
 export const Example = () => {
   const [isDark, setIsDark] = useState(true);
   const [selected, setSelected] = useState("All Snippets");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Real project implementation: Store our created snippets globally!
   const [globalSnippets, setGlobalSnippets] = useState<any[]>([]);
@@ -41,13 +47,34 @@ export const Example = () => {
   return (
     <div className={`flex min-h-screen w-full font-sans antialiased ${isDark ? "dark" : ""}`}>
       <div className="flex w-full bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 h-screen overflow-hidden">
-        <Sidebar selected={selected} setSelected={setSelected} isDark={isDark} setIsDark={setIsDark} />
+        <Sidebar
+          selected={selected}
+          setSelected={setSelected}
+          isDark={isDark}
+          setIsDark={setIsDark}
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
+        {/* Toggle Button when Sidebar is Hidden */}
+        {!isSidebarOpen && (
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="absolute top-[22px] left-6 z-50 p-2.5 rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] text-gray-500 hover:text-gray-900 dark:text-[#a1a1aa] dark:hover:text-white shadow-sm transition-all hover:scale-105 active:scale-95"
+            title="Expand Sidebar"
+          >
+            <PanelLeftOpen className="h-5 w-5" />
+          </button>
+        )}
         {selected === "Calendar" ? (
-          <div className="flex-1 bg-white dark:bg-neutral-950 overflow-hidden flex flex-col h-screen">
+          <div className="flex-1 bg-[#fffcf9] dark:bg-[#050505] overflow-hidden flex flex-col h-screen">
             <FullScreenCalendar data={[]} isDark={isDark} setIsDark={setIsDark} />
           </div>
+        ) : selected === "Profile" ? (
+          <div className="flex-1 overflow-hidden h-screen flex flex-col bg-white dark:bg-black">
+            <ProfilePage onBack={() => setSelected("All Snippets")} isDark={isDark} />
+          </div>
         ) : ["All Snippets", "Favorites", "Trash"].includes(selected) ? (
-          <ExampleContent isDark={isDark} setIsDark={setIsDark} selected={selected} />
+          <ExampleContent isDark={isDark} setIsDark={setIsDark} selected={selected} isSidebarOpen={isSidebarOpen} />
         ) : (
           <div className="flex-1 overflow-hidden h-screen bg-white dark:bg-[#09090b]">
             <NewSnippet
@@ -65,7 +92,7 @@ export const Example = () => {
   );
 };
 
-const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
+const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen }: any) => {
   const [projects, setProjects] = useState<any[]>([]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -116,190 +143,214 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark }: any) => {
   };
 
   return (
-    <nav className="flex w-72 flex-col bg-[#f8f9fa] dark:bg-[#111216] border-r border-gray-200 dark:border-neutral-800/60 h-full overflow-hidden">
-
-      {/* Brand Header */}
-      <div className="flex items-center gap-3 px-6 pt-6 pb-2">
-        <div className="grid size-8 shrink-0 place-content-center rounded-lg bg-black dark:bg-white text-white dark:text-black shadow-sm">
-          <svg width="16" height="auto" viewBox="0 0 50 39" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16.4992 2H37.5808L22.0816 24.9729H1L16.4992 2Z" />
-            <path d="M17.4224 27.102L11.4192 36H33.5008L49 13.0271H32.7024L23.2064 27.102H17.4224Z" />
-          </svg>
-        </div>
-        <span className="text-[17px] font-bold text-gray-900 dark:text-[#f3f4f6] mt-0.5 tracking-tight">CodeSnippet</span>
-      </div>
-
-      <div className="px-5 py-4">
-        <button
-          onClick={() => setSelected("New Snippet")}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[14px] font-medium py-2.5 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-colors active:scale-[0.98]"
-        >
-          <Plus className="h-4 w-4 stroke-2" />
-          New Snippet
-        </button>
-      </div>
-
-      <div className="px-5 pb-2">
-        <h2 className="text-[11px] font-bold tracking-[0.12em] text-gray-500 uppercase px-2 mb-1">Navigation</h2>
-      </div>
-
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-1.5 scrollbar-hide">
-        <Option
-          Icon={FileText}
-          title="All Snippets"
-          selected={selected}
-          setSelected={setSelected}
-        />
-        <Option
-          Icon={Heart}
-          title="Favorites"
-          selected={selected}
-          setSelected={setSelected}
-        />
-        <Option
-          Icon={Calendar}
-          title="Calendar"
-          selected={selected}
-          setSelected={setSelected}
-        />
-        <Option
-          Icon={Trash2}
-          title="Trash"
-          selected={selected}
-          setSelected={setSelected}
-        />
-
-        <div className="my-6 border-b border-gray-200 dark:border-neutral-800/40 w-[85%] mx-auto" />
-
-        <div className="space-y-4">
-          <CollapsibleGroup title="Projects" Icon={Folder} defaultExpanded>
-            <div className="mt-1 flex flex-col space-y-1">
-
-              {/* Render Existing Projects */}
-              {projects.map((proj: any) => (
-                <ProjectFolder
-                  key={proj.id}
-                  title={proj.name}
-                  defaultExpanded
-                  onNewFile={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("file"); setNewItemName(""); }}
-                  onNewFolder={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("folder"); setNewItemName(""); }}
-                  onDelete={() => handleDeleteProject(proj.id)}
-                >
-                  {/* Render Items */}
-                  {proj.items?.map((item: any) => (
-                    item.type === "folder" ? (
-                      <ProjectFolder
-                        key={item.id}
-                        title={item.name}
-                        onDelete={() => handleDeleteItem(proj.id, item.id)}
-                      >
-                        <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty</div>
-                      </ProjectFolder>
-                    ) : (
-                      <ProjectFile
-                        key={item.id}
-                        title={item.name}
-                        selected={selected}
-                        setSelected={setSelected}
-                        onDelete={() => handleDeleteItem(proj.id, item.id)}
-                      />
-                    )
-                  ))}
-
-                  {/* Inline Input for New Item directly inside project */}
-                  {creatingItemInProjectId === proj.id && (
-                    <div className="flex items-center gap-2 px-1 py-1 ml-1 mt-0.5 border border-blue-600 rounded bg-white dark:bg-[#1a1b1e]">
-                      {creatingItemType === "folder" ? <Folder className="h-3 w-3 text-blue-600 shrink-0" /> : <FileText className="h-3 w-3 text-blue-600 shrink-0" />}
-                      <input
-                        autoFocus
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleCreateItem();
-                          else if (e.key === 'Escape') {
-                            setNewItemName("");
-                            setCreatingItemInProjectId(null);
-                            setCreatingItemType(null);
-                          }
-                        }}
-                        onBlur={handleCreateItem}
-                        className="bg-transparent text-[13px] outline-none w-full text-gray-900 dark:text-white"
-                        placeholder={`New ${creatingItemType}...`}
-                      />
-                    </div>
-                  )}
-
-                  {(!proj.items || proj.items.length === 0) && creatingItemInProjectId !== proj.id && (
-                    <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty Project</div>
-                  )}
-                </ProjectFolder>
-              ))}
-
-              {/* Inline Input for New Project */}
-              {isCreatingProject ? (
-                <div className="flex items-center gap-2 px-2 py-1.5 mx-1 mt-1 border border-blue-600 rounded-md bg-white dark:bg-[#1a1b1e] shadow-sm">
-                  <Folder className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                  <input
-                    autoFocus
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleCreateProject();
-                      else if (e.key === 'Escape') {
-                        setNewProjectName("");
-                        setIsCreatingProject(false);
-                      }
-                    }}
-                    onBlur={handleCreateProject}
-                    className="bg-transparent text-[13px] outline-none w-full text-gray-900 dark:text-white"
-                    placeholder="Project name..."
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={() => setIsCreatingProject(true)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 rounded-md transition-colors"
-                  title="Create a new project"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create New Project
-                </button>
-              )}
-
-              {/* Empty State */}
-              {projects.length === 0 && !isCreatingProject && (
-                <div className="py-1 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No projects yet</div>
-              )}
-            </div>
-          </CollapsibleGroup>
-
-          <CollapsibleGroup title="Tags" Icon={Tag}>
-            <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No tags defined yet</div>
-          </CollapsibleGroup>
-
-          <CollapsibleGroup title="Languages" Icon={CodeXml}>
-            <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No languages defined yet</div>
-          </CollapsibleGroup>
-        </div>
-        <div className="pb-4" />
-      </div>
-
-      <div className="p-4 mt-auto border-t border-gray-200 dark:border-neutral-800/60">
-        <div className="flex items-center gap-4 px-2">
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition-colors text-gray-700 dark:text-gray-400"
-          >
-            {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
-          </button>
-
+    <nav className={`flex shrink-0 flex-col bg-[#f8f9fa] dark:bg-[#09090b] h-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] z-40 ${isSidebarOpen ? 'w-72 border-r border-gray-200 dark:border-[#27272a] opacity-100' : 'w-0 border-r-0 opacity-0 pointer-events-none'}`}>
+      <div className="w-72 h-full flex flex-col overflow-hidden">
+        {/* Brand Header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white font-medium text-sm shadow-sm">
-              U
+            <div className="flex h-8 w-8 items-center justify-center shrink-0">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full text-gray-900 dark:text-white">
+                <rect x="4" y="4" width="14" height="14" rx="4" fill="currentColor" fillOpacity="1" />
+                <rect x="22" y="22" width="14" height="14" rx="4" fill="currentColor" fillOpacity="1" />
+                <rect x="4" y="22" width="14" height="14" rx="4" fill="currentColor" fillOpacity="0.25" />
+                <rect x="22" y="4" width="14" height="14" rx="4" fill="currentColor" fillOpacity="0.25" />
+              </svg>
             </div>
-            <span className="text-[14px] font-medium text-gray-900 dark:text-gray-200 tracking-tight">
-              User
-            </span>
+            <span className="text-[17px] font-medium text-gray-900 dark:text-white mt-0.5 tracking-tight">CodeSnippet</span>
+          </div>
+
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-[#27272a] transition-colors"
+            title="Collapse Sidebar"
+          >
+            <PanelLeftClose className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4">
+          <button
+            onClick={() => setSelected("New Snippet")}
+            className="w-full flex items-center justify-center gap-2 bg-[#e5e5e5] hover:bg-white text-black text-[14px] font-medium py-2.5 rounded-xl shadow-sm transition-colors active:scale-[0.98]"
+          >
+            <Plus className="h-4 w-4 stroke-2" />
+            New Snippet
+          </button>
+        </div>
+
+        <div className="px-5 pb-2">
+          <h2 className="text-[11px] font-bold tracking-[0.12em] text-gray-500 uppercase px-2 mb-1">Navigation</h2>
+        </div>
+
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-1.5 scrollbar-hide">
+          <Option
+            Icon={FileText}
+            title="All Snippets"
+            selected={selected}
+            setSelected={setSelected}
+          />
+          <Option
+            Icon={Heart}
+            title="Favorites"
+            selected={selected}
+            setSelected={setSelected}
+          />
+          <Option
+            Icon={Calendar}
+            title="Calendar"
+            selected={selected}
+            setSelected={setSelected}
+          />
+          <Option
+            Icon={Trash2}
+            title="Trash"
+            selected={selected}
+            setSelected={setSelected}
+          />
+
+          <div className="my-6 border-b border-gray-200 dark:border-neutral-800/40 w-[85%] mx-auto" />
+
+          <div className="space-y-4">
+            <CollapsibleGroup title="Projects" Icon={Folder} defaultExpanded>
+              <div className="mt-1 flex flex-col space-y-1">
+
+                {/* Render Existing Projects */}
+                {projects.map((proj: any) => (
+                  <ProjectFolder
+                    key={proj.id}
+                    title={proj.name}
+                    defaultExpanded
+                    onNewFile={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("file"); setNewItemName(""); }}
+                    onNewFolder={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("folder"); setNewItemName(""); }}
+                    onDelete={() => handleDeleteProject(proj.id)}
+                  >
+                    {/* Render Items */}
+                    {proj.items?.map((item: any) => (
+                      item.type === "folder" ? (
+                        <ProjectFolder
+                          key={item.id}
+                          title={item.name}
+                          onDelete={() => handleDeleteItem(proj.id, item.id)}
+                        >
+                          <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty</div>
+                        </ProjectFolder>
+                      ) : (
+                        <ProjectFile
+                          key={item.id}
+                          title={item.name}
+                          selected={selected}
+                          setSelected={setSelected}
+                          onDelete={() => handleDeleteItem(proj.id, item.id)}
+                        />
+                      )
+                    ))}
+
+                    {/* Inline Input for New Item directly inside project */}
+                    {creatingItemInProjectId === proj.id && (
+                      <div className="flex items-center gap-2 px-1 py-1 ml-1 mt-0.5 border border-[#a78bfa] rounded bg-white dark:bg-[#09090b]">
+                        {creatingItemType === "folder" ? <Folder className="h-3 w-3 text-[#a78bfa] shrink-0" /> : <FileText className="h-3 w-3 text-[#a78bfa] shrink-0" />}
+                        <input
+                          autoFocus
+                          value={newItemName}
+                          onChange={(e) => setNewItemName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleCreateItem();
+                            else if (e.key === 'Escape') {
+                              setNewItemName("");
+                              setCreatingItemInProjectId(null);
+                              setCreatingItemType(null);
+                            }
+                          }}
+                          onBlur={handleCreateItem}
+                          className="bg-transparent text-[13px] outline-none w-full text-gray-900 dark:text-white"
+                          placeholder={`New ${creatingItemType}...`}
+                        />
+                      </div>
+                    )}
+
+                    {(!proj.items || proj.items.length === 0) && creatingItemInProjectId !== proj.id && (
+                      <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty Project</div>
+                    )}
+                  </ProjectFolder>
+                ))}
+
+                {/* Inline Input for New Project */}
+                {isCreatingProject ? (
+                  <div className="flex items-center gap-2 px-2 py-1.5 mx-1 mt-1 border border-[#a78bfa] rounded-md bg-white dark:bg-[#09090b] shadow-sm">
+                    <Folder className="h-3.5 w-3.5 text-[#a78bfa] shrink-0" />
+                    <input
+                      autoFocus
+                      value={newProjectName}
+                      onChange={(e) => setNewProjectName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleCreateProject();
+                        else if (e.key === 'Escape') {
+                          setNewProjectName("");
+                          setIsCreatingProject(false);
+                        }
+                      }}
+                      onBlur={handleCreateProject}
+                      className="bg-transparent text-[13px] outline-none w-full text-gray-900 dark:text-white"
+                      placeholder="Project name..."
+                    />
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsCreatingProject(true)}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 rounded-md transition-colors"
+                    title="Create a new project"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create New Project
+                  </button>
+                )}
+
+                {/* Empty State */}
+                {projects.length === 0 && !isCreatingProject && (
+                  <div className="py-1 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No projects yet</div>
+                )}
+              </div>
+            </CollapsibleGroup>
+
+            <CollapsibleGroup title="Tags" Icon={Tag}>
+              <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No tags defined yet</div>
+            </CollapsibleGroup>
+
+            <CollapsibleGroup title="Languages" Icon={CodeXml}>
+              <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No languages defined yet</div>
+            </CollapsibleGroup>
+          </div>
+          <div className="pb-4" />
+        </div>
+
+        <div className="p-4 mt-auto border-t border-gray-200 dark:border-neutral-800/60">
+          <div className="flex items-center gap-4 px-2 w-full">
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition-colors text-gray-700 dark:text-gray-400"
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            <div
+              onClick={() => setSelected("Profile")}
+              className="flex items-center justify-between w-full p-1.5 bg-gray-100/50 hover:bg-gray-200/80 dark:bg-[#1a1c1e] dark:hover:bg-[#272a2d] border border-transparent rounded-full cursor-pointer transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0d3b44] text-[#7de5ed] font-bold text-[15px] shadow-sm">
+                  N
+                </div>
+                <div className="flex flex-col items-start -mt-0.5">
+                  <span className="text-[14px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">
+                    User
+                  </span>
+                  <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-tight">
+                    My Profile
+                  </span>
+                </div>
+              </div>
+              <MoreVertical className="h-[18px] w-[18px] text-gray-400 mr-2 shrink-0" />
+            </div>
           </div>
         </div>
       </div>
@@ -362,7 +413,7 @@ const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, on
           className="flex flex-1 items-center gap-2 outline-none"
         >
           <ChevronRight className={`h-[14px] w-[14px] text-gray-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
-          {expanded ? <FolderOpen className="h-4 w-4 text-blue-600" /> : <Folder className="h-4 w-4 text-blue-500" />}
+          {expanded ? <FolderOpen className="h-4 w-4 text-[#a78bfa]" /> : <Folder className="h-4 w-4 text-[#a78bfa]" />}
           <span className="text-[14px] pt-[1px] font-medium">{title}</span>
         </button>
         <div className="hidden group-hover:flex items-center gap-1">
@@ -421,25 +472,23 @@ const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, selected }: any) => {
+const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen }: any) => {
   return (
-    <div className="flex-1 bg-white dark:bg-[#09090b] flex flex-col h-full overflow-hidden">
+    <div className="flex-1 bg-white dark:bg-black flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="h-[4.5rem] flex items-center justify-between px-8 border-b border-gray-100 dark:border-neutral-800/60 shrink-0">
-        <div>
-          <h1 className="text-[22px] font-semibold tracking-tight capitalize text-gray-900 dark:text-[#f3f4f6]">{selected}</h1>
-        </div>
+      <div className={`h-[4.5rem] flex items-center gap-4 border-b border-gray-100 dark:border-[#27272a] shrink-0 transition-all ${isSidebarOpen ? 'px-8' : 'pl-20 pr-8'}`}>
+        <h1 className="text-[22px] font-medium tracking-tight capitalize text-gray-900 dark:text-white flex-1">{selected}</h1>
         <div className="flex items-center gap-5">
           <div className="relative flex items-center">
             <Search className="absolute left-3.5 h-[18px] w-[18px] text-gray-400" />
-            <input type="text" placeholder="Search..." className="h-10 w-72 rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400" />
+            <input type="text" placeholder="Search..." className="h-10 w-72 rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/20 dark:text-white transition-all placeholder:text-[#52525b]" />
           </div>
         </div>
       </div>
 
       {/* Content Area */}
       <div className="flex-1 overflow-auto p-8">
-        <div className="rounded-2xl border border-gray-200 dark:border-neutral-800/60 bg-gray-50/50 dark:bg-[#111216]/50 p-8 shadow-sm flex items-center justify-center h-full min-h-[400px]">
+        <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50/50 dark:bg-[#09090b]/50 p-8 shadow-sm flex items-center justify-center h-full min-h-[400px]">
           <p className="text-gray-500 dark:text-[#a1a1aa] text-[15px]">
             Content for <strong className="font-semibold text-gray-700 dark:text-gray-300 capitalize">{selected}</strong> goes here.
           </p>

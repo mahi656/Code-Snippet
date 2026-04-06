@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SignInPage as FullSignInPage } from '../src/components/ui/sign-in.jsx';
-import photo from '../src/Photos/code.jpg';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -26,7 +25,6 @@ export const Login = () => {
           window.location.href = '/OAuth/github';
         }}
         onCreateAccount={() => navigate('/signup')}
-        heroImageSrc={photo}
       />
     </motion.div>
   );
