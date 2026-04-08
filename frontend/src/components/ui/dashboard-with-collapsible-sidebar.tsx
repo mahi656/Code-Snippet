@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FileText,
   Heart,
@@ -43,6 +44,24 @@ export const Example = () => {
       document.documentElement.classList.remove("dark");
     }
   }, [isDark]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const username = params.get('username');
+
+    if (token) {
+      localStorage.setItem('token', token);
+      if (username) {
+        localStorage.setItem('username', username);
+      }
+      // Remove token from URL
+      navigate('/dashboard', { replace: true });
+    }
+  }, [location, navigate]);
 
   return (
     <div className={`flex min-h-screen w-full font-sans antialiased ${isDark ? "dark" : ""}`}>
