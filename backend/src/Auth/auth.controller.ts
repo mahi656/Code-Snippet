@@ -8,6 +8,11 @@ class AuthController {
         try {
             const { fullName, username, email, password } = req.body;
 
+            if (!fullName || !username || !email || !password) {
+                res.status(400).json({ message: 'Please provide all required fields' });
+                return;
+            }
+
             const existingUser = await User.findOne({ $or: [{ email }, { username }] });
             if (existingUser) {
                 res.status(400).json({ message: 'User with this email or username already exists' });
@@ -37,9 +42,19 @@ class AuthController {
         try {
             const { email, password } = req.body;
 
+            if (!email || !password) {
+                res.status(400).json({ message: 'Please provide email and password' });
+                return;
+            }
+
             const user = await User.findOne({ email });
             if (!user) {
                 res.status(400).json({ message: 'Invalid credentials' });
+                return;
+            }
+
+            if (!user.password) {
+                res.status(400).json({ message: 'This account uses OAuth. Please sign in with GitHub.' });
                 return;
             }
 
@@ -70,6 +85,20 @@ class AuthController {
         } catch (error) {
             console.error('Error in login:', error);
             res.status(500).json({ message: 'Server error during login' });
+        }
+    }
+
+    public async getUserByUsername(req: any, res: Response): Promise<void> {
+        try {
+            const user = await User.findOne({ username: req.params.username }).select('-password');
+            if (!user) {
+                res.status(404).json({ message: 'User not found' });
+                return;
+            }
+            res.json(user);
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).json({ message: 'Server error fetching user' });
         }
     }
 }

@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
+import User from '../Auth/auth.model';
 
 class GithubAuthRoutes {
     public router: Router;
@@ -39,7 +41,27 @@ class GithubAuthRoutes {
             });
             const userData = userResponse.data;
 
-            res.redirect(`http://localhost:5173/dashboard?githubUser=${encodeURIComponent(userData.login)}`);
+            let user = await User.findOne({ githubId: userData.id.toString() });
+            if (!user) {
+                user = new User({
+                    githubId: userData.id.toString(),
+                    username: userData.login,
+                    avatar_url: userData.avatar_url,
+                    bio: userData.bio,
+                    followers: userData.followers,
+                    public_repos: userData.public_repos
+                });
+                await user.save();
+            }
+
+            const payload = {
+                user: {
+                    id: user.id
+                }
+            };
+            const jwtToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret123', { expiresIn: '1d' });
+
+            res.redirect(`http://localhost:5173/dashboard?token=${jwtToken}&username=${encodeURIComponent(user.username)}`);
         } catch (err: any) {
             console.error('OAuth Error:', err.message);
             res.redirect('http://localhost:5173/login?error=oauth_failed');
