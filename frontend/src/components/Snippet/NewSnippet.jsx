@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Save, X, Code, Tag, AlignLeft, ChevronDown, Layers, Package, Link, Globe, Lock } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Save, X, Code, Tag, AlignLeft, ChevronDown, Layers, Package, Globe, Lock, Star, Folder, Calendar, Paperclip, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, isToday, addDays } from 'date-fns';
 import Editor from '@monaco-editor/react';
-import ErrorMessage from '../Error/DuplicateError.jsx';
+import DuplicateError from '../Error/DuplicateError.jsx';
+import { checkTitleCompulsory } from '../Error/TitleCompulsory.jsx';
 
 const LANGUAGES = [
   { value: "javascript", label: "JavaScript" },
@@ -14,7 +16,6 @@ const LANGUAGES = [
   { value: "go", label: "Go" },
   { value: "rust", label: "Rust" },
   { value: "php", label: "PHP" },
-  { value: "ruby", label: "Ruby" },
   { value: "swift", label: "Swift" },
   { value: "kotlin", label: "Kotlin" },
   { value: "dart", label: "Dart" },
@@ -24,6 +25,7 @@ const LANGUAGES = [
   { value: "vue", label: "Vue" },
   { value: "angular", label: "Angular" },
   { value: "json", label: "JSON" },
+  { value: "mongodb", label: "MongoDB" },
   { value: "sql", label: "SQL" },
   { value: "bash", label: "Bash" },
   { value: "markdown", label: "Markdown" },
@@ -41,16 +43,141 @@ const FRAMEWORKS = [
 
 const VISIBILITY_OPTIONS = [
   { value: "public", label: "Public (Shared with team)" },
-  { value: "private", label: "Private (Only me)" }
+  { value: "private", label: "Private (Only me)" },
+  { value: "unlisted", label: "Unlisted (Anyone with link)" }
 ];
 
-export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) {
+const PROJECTS = [
+  { value: "none", label: "None" },
+  { value: "work", label: "Work" },
+  { value: "personal", label: "Personal" },
+  { value: "learning", label: "Learning" },
+  { value: "add_new", label: "+ Add New" }
+];
+
+const CustomDatePicker = ({ selectedDate, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(selectedDate ? new Date(selectedDate) : new Date());
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+
+  const dateFormat = "MMMM yyyy";
+  const days = [];
+  let day = startDate;
+  let formattedDate = "";
+
+  while (day <= endDate) {
+    for (let i = 0; i < 7; i++) {
+      formattedDate = format(day, "d");
+      const cloneDay = day;
+      days.push(
+        <div
+          key={day.toString()}
+          onClick={() => {
+            onChange(format(cloneDay, 'yyyy-MM-dd'));
+            setIsOpen(false);
+          }}
+          className={`flex-1 flex items-center justify-center text-[13px] h-[32px] rounded-full cursor-pointer transition-colors ${!isSameMonth(day, monthStart)
+            ? "text-gray-300 dark:text-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800"
+            : selectedDate && isSameDay(day, new Date(selectedDate))
+              ? "bg-violet-600 text-white font-medium shadow-sm hover:bg-violet-700"
+              : isToday(day)
+                ? "bg-violet-50 dark:bg-indigo-900/40 text-violet-600 font-medium hover:bg-violet-100 dark:hover:bg-indigo-900/60"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-800"
+            }`}
+        >
+          {formattedDate}
+        </div>
+      );
+      day = addDays(day, 1);
+    }
+  }
+
+  const rows = [];
+  let cells = [];
+  days.forEach((dayElement, index) => {
+    if (index % 7 !== 0) {
+      cells.push(dayElement);
+    } else {
+      if (index !== 0) rows.push(<div className="flex w-full justify-between gap-1 mb-1" key={index}>{cells}</div>);
+      cells = [dayElement];
+    }
+  });
+  rows.push(<div className="flex w-full justify-between gap-1" key="last">{cells}</div>);
+
+  return (
+    <div className="relative w-full">
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full h-[40px] rounded-lg border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] px-3 text-[14px] outline-none hover:border-indigo-500 dark:text-white transition-all flex items-center justify-between cursor-pointer"
+      >
+        <span className={selectedDate ? "text-gray-900 dark:text-gray-100 font-medium" : "text-gray-400"}>
+          {selectedDate ? format(new Date(selectedDate), "MMM dd, yyyy") : "Select a date..."}
+        </span>
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute z-20 top-[48px] left-0 w-[280px] bg-white dark:bg-[#09090b] border border-gray-200 dark:border-[#27272a] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-4 select-none">
+
+            <div className="flex items-center justify-between mb-4">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setCurrentMonth(subMonths(currentMonth, 1)); }}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-500 transition-colors"
+                title="Previous Month"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-[14px] font-medium text-gray-900 dark:text-gray-100">
+                {format(currentMonth, dateFormat)}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setCurrentMonth(addMonths(currentMonth, 1)); }}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-500 transition-colors"
+                title="Next Month"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex w-full justify-between gap-1 mb-2">
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                <div key={d} className="flex-1 flex justify-center text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col mb-1">
+              {rows}
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#27272a] flex justify-between">
+              <button type="button" onClick={() => { onChange(''); setIsOpen(false); }} className="text-[12px] font-medium text-gray-400 hover:text-gray-100 dark:hover:text-gray-200 transition-colors">Clear</button>
+              <button type="button" onClick={() => { onChange(format(new Date(), 'yyyy-MM-dd')); setIsOpen(false); }} className="text-[12px] font-medium text-[#a78bfa] hover:text-[#c4b5fd] transition-colors">Today</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default function NewSnippet({ onSave, onCancel, existingSnippets = [], isEditing = false }) {
   //This part stores all the "live" data for our form
 
   // These three variables keep track of whether our dropdown menus are open or closed
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isFrameworkDropdownOpen, setIsFrameworkDropdownOpen] = useState(false);
   const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
+
+  const fileInputRef = useRef(null);
 
   // This stores any error message we want to show the user (like "Title is required")
   const [errorText, setErrorText] = useState("");
@@ -61,17 +188,21 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
     description: '',
     language: 'javascript',
     framework: 'none',
-    visibility: 'public',
+    visibility: 'private',
     dependencies: '',
-    referenceLink: '',
     code: '// Start coding here...',
     tags: '',
+    isFavorite: false,
+    changeNote: '',
+    showInCalendar: false,
+    calendarDate: '',
+    attachments: []
   });
 
   // This function updates our formData whenever a user types in a normal text box
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   // This is a special function just for the Monaco Editor part
@@ -80,14 +211,34 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
     setFormData(prev => ({ ...prev, code: value || '' }));
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setFormData(prev => ({
+        ...prev,
+        attachments: [...prev.attachments, ...newFiles]
+      }));
+    }
+  };
+
+  const currentAttachments = formData.attachments || [];
+
+  const removeAttachment = (indexToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, index) => index !== indexToRemove)
+    }));
+  };
+
   // This function runs when the user clicks the "Save Snippet" button
   const handleSubmit = (e) => {
     e.preventDefault(); // This stops the page from refreshing
     setErrorText(""); // Clear any old errors
 
     // Step 1: Check if the user forgot to give the snippet a name
-    if (!formData.title.trim()) {
-      setErrorText("Snippet Title is required.");
+    const titleError = checkTitleCompulsory(formData.title);
+    if (titleError) {
+      setErrorText(titleError);
       return;
     }
 
@@ -126,27 +277,26 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
     <div className="flex flex-col h-full bg-white dark:bg-[#09090b] text-gray-900 dark:text-gray-100 font-sans antialiased overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-8 h-[4.5rem] border-b border-gray-100 dark:border-neutral-800/60 shrink-0">
+      <div className="flex items-center justify-between px-8 h-[4.5rem] border-b border-gray-100 dark:border-[#27272a] shrink-0">
         <div>
           <h2 className="text-[22px] font-semibold tracking-tight text-gray-900 dark:text-[#f3f4f6]">
             Create New Snippet
           </h2>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={onCancel}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-[#111216] text-[14px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors"
+            className="px-4 py-2 text-[14px] font-medium text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 rounded-xl transition-all duration-200 shadow-sm"
           >
-            <X className="h-4 w-4" />
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[14px] font-medium text-white shadow-sm transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#7c3aed] hover:bg-[#8b5cf6] text-[14px] font-medium text-white shadow-[0_10px_20px_-10px_rgba(124,58,237,0.5)] transition-all duration-200 active:scale-[0.98] group"
           >
-            <Save className="h-4 w-4" />
-            Save Snippet
+            <Save className="h-4 w-4 text-white/90 group-hover:scale-110 transition-transform" />
+            {isEditing ? 'Save as New Version' : 'Save Snippet'}
           </button>
         </div>
       </div>
@@ -154,8 +304,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
       {/* Main Form Content */}
       <div className="flex-1 overflow-auto p-8">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6 pb-12">
-          <ErrorMessage message={errorText} onClose={() => setErrorText("")} />
-
+          <DuplicateError message={errorText} onClose={() => setErrorText("")} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Title */}
@@ -171,7 +320,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g., JWT Authentication Middleware"
-                className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] px-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600 shadow-sm"
+                className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-transparent px-4 text-[15px] text-gray-900 dark:text-white outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:focus:bg-transparent dark:autofill:shadow-[0_0_0_1000px_#09090b_inset] dark:autofill:[-webkit-text-fill-color:white] transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600 shadow-sm"
               />
             </div>
 
@@ -181,11 +330,11 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 Language
               </label>
               <div className="relative shadow-sm rounded-xl">
-                <Code className="absolute left-3.5 top-[13px] h-[18px] w-[18px] text-gray-400 pointer-events-none z-10" />
+                <Code className={`absolute left-3.5 top-[13px] h-[18px] w-[18px] transition-colors ${isLanguageDropdownOpen ? 'text-[#a78bfa]' : 'text-[#71717a]'} pointer-events-none z-10`} />
                 <button
                   type="button"
                   onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all text-left"
+                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:text-white transition-all text-left"
                 >
                   <span className="truncate">{LANGUAGES.find(l => l.value === formData.language)?.label || 'Select Language'}</span>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} />
@@ -194,7 +343,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 {isLanguageDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsLanguageDropdownOpen(false)}></div>
-                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#111216] border border-gray-200 dark:border-neutral-800/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
+                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#09090b] border border-gray-200 dark:border-[#27272a] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
                       {LANGUAGES.map(lang => (
                         <button
                           key={lang.value}
@@ -203,7 +352,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                             setFormData(prev => ({ ...prev, language: lang.value }));
                             setIsLanguageDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.language === lang.value ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
+                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.language === lang.value ? 'bg-[#a78bfa]/10 text-[#a78bfa] font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
                         >
                           {lang.label}
                         </button>
@@ -220,11 +369,11 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 Framework <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
               </label>
               <div className="relative shadow-sm rounded-xl">
-                <Layers className="absolute left-3.5 top-[13px] h-[18px] w-[18px] text-gray-400 pointer-events-none z-10" />
+                <Layers className={`absolute left-3.5 top-[13px] h-[18px] w-[18px] transition-colors ${isFrameworkDropdownOpen ? 'text-[#a78bfa]' : 'text-[#71717a]'} pointer-events-none z-10`} />
                 <button
                   type="button"
                   onClick={() => setIsFrameworkDropdownOpen(!isFrameworkDropdownOpen)}
-                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all text-left"
+                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:text-white transition-all text-left"
                 >
                   <span className="truncate">{FRAMEWORKS.find(f => f.value === formData.framework)?.label || 'None / Vanilla'}</span>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isFrameworkDropdownOpen ? 'rotate-180' : ''}`} />
@@ -233,7 +382,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 {isFrameworkDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsFrameworkDropdownOpen(false)}></div>
-                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#111216] border border-gray-200 dark:border-neutral-800/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
+                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#09090b] border border-gray-200 dark:border-[#27272a] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
                       {FRAMEWORKS.map(fw => (
                         <button
                           key={fw.value}
@@ -242,7 +391,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                             setFormData(prev => ({ ...prev, framework: fw.value }));
                             setIsFrameworkDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.framework === fw.value ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
+                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.framework === fw.value ? 'bg-[#a78bfa]/10 text-[#a78bfa] font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
                         >
                           {fw.label}
                         </button>
@@ -267,7 +416,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   value={formData.tags}
                   onChange={handleChange}
                   placeholder="e.g. react, hooks, ui..."
-                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-transparent pl-10 pr-4 text-[15px] text-gray-900 dark:text-white outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:focus:bg-transparent dark:autofill:shadow-[0_0_0_1000px_#09090b_inset] dark:autofill:[-webkit-text-fill-color:white] transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
                 />
               </div>
             </div>
@@ -279,13 +428,13 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
               </label>
               <div className="relative shadow-sm rounded-xl">
                 {formData.visibility === 'public' ?
-                  <Globe className="absolute left-3.5 top-[13px] h-[18px] w-[18px] text-gray-400 pointer-events-none z-10" /> :
-                  <Lock className="absolute left-3.5 top-[13px] h-[18px] w-[18px] text-gray-400 pointer-events-none z-10" />
+                  <Globe className={`absolute left-3.5 top-[13px] h-[18px] w-[18px] transition-colors ${isVisibilityDropdownOpen ? 'text-[#a78bfa]' : 'text-[#71717a]'} pointer-events-none z-10`} /> :
+                  <Lock className={`absolute left-3.5 top-[13px] h-[18px] w-[18px] transition-colors ${isVisibilityDropdownOpen ? 'text-[#a78bfa]' : 'text-[#71717a]'} pointer-events-none z-10`} />
                 }
                 <button
                   type="button"
                   onClick={() => setIsVisibilityDropdownOpen(!isVisibilityDropdownOpen)}
-                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all text-left"
+                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:text-white transition-all text-left"
                 >
                   <span className="truncate">{VISIBILITY_OPTIONS.find(v => v.value === formData.visibility)?.label || 'Public (Shared with team)'}</span>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isVisibilityDropdownOpen ? 'rotate-180' : ''}`} />
@@ -294,7 +443,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                 {isVisibilityDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsVisibilityDropdownOpen(false)}></div>
-                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#111216] border border-gray-200 dark:border-neutral-800/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
+                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#09090b] border border-gray-200 dark:border-[#27272a] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
                       {VISIBILITY_OPTIONS.map(vis => (
                         <button
                           key={vis.value}
@@ -303,7 +452,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                             setFormData(prev => ({ ...prev, visibility: vis.value }));
                             setIsVisibilityDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.visibility === vis.value ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
+                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.visibility === vis.value ? 'bg-[#a78bfa]/10 text-[#a78bfa] font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
                         >
                           {vis.label}
                         </button>
@@ -311,8 +460,11 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                     </div>
                   </>
                 )}
+
               </div>
             </div>
+
+
 
             {/* Dependencies */}
             <div className="space-y-2">
@@ -328,29 +480,31 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   value={formData.dependencies}
                   onChange={handleChange}
                   placeholder="e.g. npm install lucide-react"
-                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-transparent pl-10 pr-4 text-[15px] text-gray-900 dark:text-white outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:focus:bg-transparent dark:autofill:shadow-[0_0_0_1000px_#09090b_inset] dark:autofill:[-webkit-text-fill-color:white] transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
                 />
               </div>
             </div>
 
-            {/* Reference Link */}
-            <div className="space-y-2">
-              <label htmlFor="referenceLink" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
-                Ext. Reference Link <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+            {/* Mark as Favorite */}
+            <div className="flex flex-col justify-end pb-1.5 min-h-[44px]">
+              <label className={`flex items-center gap-3 cursor-pointer text-[14px] font-medium transition-all duration-300 select-none group px-3 py-2 rounded-xl border ${formData.isFavorite ? 'bg-[#a78bfa]/10 border-[#a78bfa]/30 text-[#a78bfa]' : 'text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-100 dark:hover:bg-neutral-800'}`}>
+                <div className="relative flex items-center justify-center w-[22px] h-[22px]">
+                  <input
+                    type="checkbox"
+                    name="isFavorite"
+                    checked={formData.isFavorite}
+                    onChange={handleChange}
+                    className="peer appearance-none w-[22px] h-[22px] rounded-[6px] border-2 border-gray-400 dark:border-neutral-500 bg-white dark:bg-black checked:bg-[#a78bfa] checked:border-[#a78bfa] checked:shadow-[0_0_15px_rgba(167,139,250,0.3)] transition-all cursor-pointer shadow-sm"
+                  />
+                  <svg className="absolute w-[12px] h-[12px] pointer-events-none text-white opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span className="pt-0.5 text-inherit">Mark as Favorite</span>
               </label>
-              <div className="relative shadow-sm rounded-xl">
-                <Link className="absolute left-3.5 top-3.5 h-[18px] w-[18px] text-gray-400" />
-                <input
-                  type="url"
-                  id="referenceLink"
-                  name="referenceLink"
-                  value={formData.referenceLink}
-                  onChange={handleChange}
-                  placeholder="https://stackoverflow.com/..."
-                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
-                />
-              </div>
             </div>
+
+
 
             {/* Description */}
             <div className="space-y-2 md:col-span-2">
@@ -366,8 +520,114 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   value={formData.description}
                   onChange={handleChange}
                   placeholder="Briefly describe what this snippet does..."
-                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-neutral-800/60 bg-white dark:bg-[#111216] pl-10 pr-4 text-[15px] outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-transparent pl-10 pr-4 text-[15px] text-gray-900 dark:text-white outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:focus:bg-transparent dark:autofill:shadow-[0_0_0_1000px_#09090b_inset] dark:autofill:[-webkit-text-fill-color:white] transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
                 />
+              </div>
+            </div>
+
+            {/* Change Note (Version Control) */}
+            {isEditing && (
+              <div className="space-y-2 md:col-span-2">
+                <label htmlFor="changeNote" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                  Change Note <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="changeNote"
+                  name="changeNote"
+                  required={isEditing}
+                  value={formData.changeNote}
+                  onChange={handleChange}
+                  placeholder="What changed in this version?"
+                  className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] px-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-indigo-600/20 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600 shadow-sm"
+                />
+              </div>
+            )}
+
+            {/* Calendar & Attachments Container */}
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-5 rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#09090b]">
+
+              {/* Calendar Section */}
+              <div className="space-y-4">
+                {/* Mark as Favorite */}
+                <label className={`flex items-center gap-3 cursor-pointer text-[14px] font-medium transition-all duration-200 select-none group px-3 py-2 rounded-xl border ${formData.showInCalendar ? 'bg-[#a78bfa]/10 border-[#a78bfa]/30 text-[#a78bfa] font-semibold' : 'text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
+                  <div className="relative flex items-center justify-center w-[18px] h-[18px]">
+                    <input
+                      type="checkbox"
+                      name="showInCalendar"
+                      checked={formData.showInCalendar}
+                      onChange={handleChange}
+                      className="peer appearance-none w-[18px] h-[18px] rounded-[4px] border-2 border-gray-400 dark:border-neutral-600 bg-white dark:bg-black checked:bg-[#a78bfa] checked:border-[#a78bfa] checked:shadow-[0_0_10px_rgba(167,139,250,0.3)] transition-all cursor-pointer"
+                    />
+                    <svg className="absolute w-[10px] h-[10px] pointer-events-none text-white opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <Calendar className={`h-[18px] w-[18px] transition-colors ${formData.showInCalendar ? 'text-[#a78bfa]' : 'text-gray-400 dark:text-gray-500'}`} />
+                  Show in Calendar
+                </label>
+
+                {formData.showInCalendar && (
+                  <div className="pl-6 space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="calendarDate" className="text-[13px] text-gray-600 dark:text-gray-400">Date</label>
+                      <CustomDatePicker
+                        selectedDate={formData.calendarDate}
+                        onChange={(dateValue) => setFormData(prev => ({ ...prev, calendarDate: dateValue }))}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <Paperclip className="h-[18px] w-[18px] text-gray-400 dark:text-gray-500" />
+                    Attachments
+                  </span>
+
+                  {/* Hidden File Input */}
+                  <input
+                    type="file"
+                    multiple
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-[13px] font-medium text-[#a78bfa] hover:text-[#c4b5fd] hover:bg-[#a78bfa]/10 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Upload Files
+                  </button>
+                </div>
+
+                <div className={`text-[13px] text-gray-500 dark:text-gray-400 p-4 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl ${currentAttachments.length === 0 ? 'text-center' : 'space-y-2'}`}>
+                  {currentAttachments.length === 0 ? (
+                    "No attachments currently uploaded."
+                  ) : (
+                    <ul className="space-y-2">
+                      {currentAttachments.map((file, index) => (
+                        <li key={index} className="flex items-center justify-between bg-white dark:bg-[#09090b] p-2 pr-3 rounded-lg border border-gray-100 dark:border-neutral-800">
+                          <span className="truncate max-w-[200px] text-gray-700 dark:text-gray-300 font-medium">
+                            {file.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeAttachment(index)}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            title="Remove file"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -378,10 +638,10 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [] }) 
                   Snippet Code <span className="text-red-500">*</span>
                 </label>
               </div>
-              <div className="rounded-xl border border-gray-200 dark:border-neutral-800/60 overflow-hidden bg-[#fafafa] dark:bg-[#0d0e12] transition-all shadow-sm">
+              <div className="rounded-xl border border-gray-200 dark:border-[#27272a] overflow-hidden bg-[#fafafa] dark:bg-[#0d0e12] transition-all shadow-sm">
 
                 {/* Editor Header like MacOS */}
-                <div className="flex items-center px-4 py-2.5 border-b border-gray-200 dark:border-neutral-800/60 bg-gray-50 dark:bg-[#111216]">
+                <div className="flex items-center px-4 py-2.5 border-b border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#09090b]">
                   <div className="flex gap-2">
                     <div className="w-[11px] h-[11px] rounded-full bg-[#ff5f56]"></div>
                     <div className="w-[11px] h-[11px] rounded-full bg-[#ffbd2e]"></div>
