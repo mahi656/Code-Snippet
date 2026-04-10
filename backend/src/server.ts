@@ -6,6 +6,7 @@ import AuthRoutes from './Auth/auth.route';
 import GithubAuthRoutes from './OAuth/Auth.Github';
 import SnippetRoutes from './Snippet/snippet.route';
 import VersionRoutes from './Version/version.route';
+import FavoriteRoutes from './Favorite/favorite.route';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ class App {
         this.app.use('/OAuth', GithubAuthRoutes);
         this.app.use('/api/snippets', SnippetRoutes);
         this.app.use('/api/versions', VersionRoutes);
+        this.app.use('/api/favorites', FavoriteRoutes);
     }
 
     public listen(): void {
