@@ -22,7 +22,7 @@ export const Login = () => {
           navigate('/dashboard');
         }}
         onGithubSignIn={() => {
-          window.location.href = '/OAuth/github';
+          window.location.href = 'http://localhost:5001/OAuth/github';
         }}
         onCreateAccount={() => navigate('/signup')}
       />

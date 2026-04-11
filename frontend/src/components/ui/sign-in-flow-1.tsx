@@ -383,7 +383,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ className }) => {
                                     {/* button to login via github */}
                                     <div className="space-y-4">
                                         <button
-                                            onClick={() => window.location.href = '/OAuth/github'}
+                                            onClick={() => window.location.href = 'http://localhost:5001/OAuth/github'}
                                             className="backdrop-blur-[2px] w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-full py-3 px-4 transition-colors">
                                             <Github className="w-5 h-5" />
                                             <span>Continue with GitHub</span>

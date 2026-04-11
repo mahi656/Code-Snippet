@@ -22,7 +22,7 @@ export const Signup = () => {
                     // alert("Sign Up form submitted!");
                 }}
                 onGithubSignUp={() => {
-                    window.location.href = '/OAuth/github';
+                    window.location.href = 'http://localhost:5001/OAuth/github';
                 }}
                 onSignIn={() => navigate('/login')}
             />
