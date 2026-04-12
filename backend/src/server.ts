@@ -5,6 +5,7 @@ import Database from './config/db';
 import AuthRoutes from './Auth/auth.route';
 import GithubAuthRoutes from './OAuth/Auth.Github';
 import SnippetRoutes from './Snippet/snippet.route';
+import VersionRoutes from './Version/version.route';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ class App {
         this.app.use('/auth', AuthRoutes);
         this.app.use('/OAuth', GithubAuthRoutes);
         this.app.use('/api/snippets', SnippetRoutes);
+        this.app.use('/api/versions', VersionRoutes);
     }
 
     public listen(): void {
