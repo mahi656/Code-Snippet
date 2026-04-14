@@ -8,6 +8,7 @@ import SnippetRoutes from './Snippet/snippet.route';
 import VersionRoutes from './Version/version.route';
 import FavoriteRoutes from './Favorite/favorite.route';
 import CalendarRoutes from './Calendar/calendar.route';
+import TagRoutes from './Tag/tag.route';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ class App {
         this.app.use('/api/versions', VersionRoutes);
         this.app.use('/api/favorites', FavoriteRoutes);
         this.app.use('/api/calendar', CalendarRoutes);
+        this.app.use('/api/tags', TagRoutes);
     }
 
     public listen(): void {
