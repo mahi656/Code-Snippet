@@ -4,10 +4,8 @@ import { AuthRequest } from '../Auth/auth.middleware';
 import Snippet from '../Snippet/snippet.model';
 
 class TagController {
-    /**
-     * Get all unique tags from the user's snippets with their snippet count.
-     * Tags are auto-derived from snippets — no separate creation needed.
-     */
+
+    // Get all unique tags from the user's snippets with their snippet count.
     public async getMyTags(req: AuthRequest, res: Response): Promise<void> {
         try {
             const userId = req.user?.id;
@@ -15,16 +13,20 @@ class TagController {
             const result = await Snippet.aggregate([
                 { $match: { userId: new mongoose.Types.ObjectId(userId) } },
                 { $unwind: '$tags' },
-                { $group: {
-                    _id: { $toLower: '$tags' },
-                    snippetCount: { $sum: 1 }
-                }},
+                {
+                    $group: {
+                        _id: { $toLower: '$tags' },
+                        snippetCount: { $sum: 1 }
+                    }
+                },
                 { $sort: { _id: 1 } },
-                { $project: {
-                    _id: 0,
-                    name: '$_id',
-                    snippetCount: 1
-                }}
+                {
+                    $project: {
+                        _id: 0,
+                        name: '$_id',
+                        snippetCount: 1
+                    }
+                }
             ]);
 
             res.status(200).json(result);
@@ -34,9 +36,8 @@ class TagController {
         }
     }
 
-    /**
-     * Get all snippets that have a specific tag.
-     */
+
+    //  * Get all snippets that have a specific tag.
     public async getSnippetsByTag(req: AuthRequest, res: Response): Promise<void> {
         try {
             const userId = req.user?.id;
