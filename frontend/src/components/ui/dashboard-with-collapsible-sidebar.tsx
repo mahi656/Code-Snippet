@@ -60,6 +60,12 @@ export const Example = () => {
       }
       // Remove token from URL
       navigate('/dashboard', { replace: true });
+    } else {
+      // Auth Guard: check if token exists in localStorage
+      const storedToken = localStorage.getItem('token');
+      if (!storedToken) {
+        navigate('/login', { replace: true });
+      }
     }
   }, [location, navigate]);
 
@@ -112,6 +118,9 @@ export const Example = () => {
 };
 
 const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen }: any) => {
+  const username = localStorage.getItem('username') || "User";
+  const userInitial = username.charAt(0).toUpperCase();
+
   const [projects, setProjects] = useState<any[]>([]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -357,11 +366,11 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0d3b44] text-[#7de5ed] font-bold text-[15px] shadow-sm">
-                  N
+                  {userInitial}
                 </div>
                 <div className="flex flex-col items-start -mt-0.5">
                   <span className="text-[14px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">
-                    User
+                    {username}
                   </span>
                   <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-tight">
                     My Profile

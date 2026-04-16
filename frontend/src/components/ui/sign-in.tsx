@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Github, QrCode, Mail, Smartphone } from 'lucide-react';
+import { Eye, EyeOff, Github, QrCode, Mail, Smartphone, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import Side1 from '../../Photos/Side1.png';
@@ -21,6 +21,7 @@ interface SignInPageProps {
     onGithubSignIn?: () => void;
     onResetPassword?: () => void;
     onCreateAccount?: () => void;
+    isLoading?: boolean;
 }
 
 // --- SUB-COMPONENTS ---
@@ -43,9 +44,11 @@ export const SignInPage: React.FC<SignInPageProps> = ({
     onGithubSignIn,
     onResetPassword,
     onCreateAccount,
+    isLoading = false,
 }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [loginMode, setLoginMode] = useState<'qr' | 'email'>('qr');
+    const [rememberMe, setRememberMe] = useState(false);
 
     return (
         <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw] bg-black">
@@ -114,7 +117,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                                     <div className="animate-element animate-delay-300">
                                         <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Email <span className="text-red-500">*</span></label>
                                         <GlassInputWrapper>
-                                            <input name="email" type="email" placeholder="john@example.com" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                            <input name="email" type="email" placeholder="you@example.com" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
                                         </GlassInputWrapper>
                                     </div>
 
@@ -132,16 +135,34 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
                                     <div className="animate-element animate-delay-500 flex items-center justify-between text-sm pt-2">
                                         <label className="flex items-center gap-3 cursor-pointer group">
-                                            <div className="w-4 h-4 rounded-md border border-[#3f3f46] flex items-center justify-center group-hover:border-[#71717a] transition-colors bg-[#0f0f0f]">
-                                                <input type="checkbox" name="rememberMe" className="opacity-0 absolute w-0 h-0" />
+                                            <div 
+                                                onClick={() => setRememberMe(!rememberMe)}
+                                                className={`w-[18px] h-[18px] rounded-full border transition-all duration-200 flex items-center justify-center ${
+                                                    rememberMe 
+                                                    ? 'bg-[#a78bfa] border-[#a78bfa] shadow-[0_0_10px_rgba(167,139,250,0.3)]' 
+                                                    : 'border-[#3f3f46] bg-[#0f0f0f] group-hover:border-[#71717a]'
+                                                }`}
+                                            >
+                                                <input 
+                                                    type="checkbox" 
+                                                    name="rememberMe" 
+                                                    checked={rememberMe}
+                                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                                    className="opacity-0 absolute w-0 h-0" 
+                                                />
+                                                {rememberMe && <Check className="w-3 h-3 text-white stroke-[3px]" />}
                                             </div>
                                             <span className="text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors text-[13px]">Keep me signed in</span>
                                         </label>
                                         <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="text-[#a78bfa] hover:text-[#c4b5fd] text-[13px] transition-colors font-medium">Reset password?</a>
                                     </div>
 
-                                    <button type="submit" className="animate-element animate-delay-600 w-full rounded-lg bg-white/90 hover:bg-white py-3 font-medium text-black transition-colors mt-4 text-[14px] shadow-lg shadow-white/5">
-                                        Sign In
+                                    <button 
+                                        type="submit" 
+                                        disabled={isLoading}
+                                        className="animate-element animate-delay-600 w-full rounded-lg bg-white/90 hover:bg-white py-3 font-medium text-black transition-colors mt-4 text-[14px] shadow-lg shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoading ? "Signing In..." : "Sign In"}
                                     </button>
                                 </form>
 
@@ -174,7 +195,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
                         {/* Image composition */}
                         <div className="relative w-full max-w-[450px] aspect-square flex items-center justify-center">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, x: -60, y: 30, rotate: -5 }}
                                 animate={{ opacity: 1, x: -30, y: 20, rotate: -2 }}
                                 transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
@@ -183,8 +204,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-black/50 to-transparent z-10 pointer-events-none" />
                                 <img src={Side1} alt="Preview 1" className="w-full h-full object-cover rounded-2xl shadow-2xl border border-white/5" />
                             </motion.div>
-                            
-                            <motion.div 
+
+                            <motion.div
                                 initial={{ opacity: 0, x: 60, y: -30, rotate: 5 }}
                                 animate={{ opacity: 1, x: 30, y: -20, rotate: 3 }}
                                 transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}

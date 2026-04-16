@@ -19,6 +19,7 @@ interface SignUpPageProps {
     onSignUp?: (event: React.FormEvent<HTMLFormElement>) => void;
     onGithubSignUp?: () => void;
     onSignIn?: () => void;
+    isLoading?: boolean;
 }
 
 // --- SUB-COMPONENTS ---
@@ -40,6 +41,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
     onSignUp,
     onGithubSignUp,
     onSignIn,
+    isLoading = false,
 }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -58,13 +60,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                                 <div>
                                     <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Full Name <span className="text-red-500">*</span></label>
                                     <GlassInputWrapper>
-                                        <input name="fullName" type="text" placeholder="John Doe" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                        <input name="fullName" type="text" placeholder="Your name" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
                                     </GlassInputWrapper>
                                 </div>
                                 <div>
                                     <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Username <span className="text-red-500">*</span></label>
                                     <GlassInputWrapper>
-                                        <input name="username" type="text" placeholder="johndoe" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                        <input name="username" type="text" placeholder="Username" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
                                     </GlassInputWrapper>
                                 </div>
                             </div>
@@ -72,7 +74,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                             <div className="animate-element animate-delay-400">
                                 <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Email <span className="text-red-500">*</span></label>
                                 <GlassInputWrapper>
-                                    <input name="email" type="email" placeholder="john@example.com" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
+                                    <input name="email" type="email" placeholder="you@example.com" className="w-full bg-transparent text-[14px] px-4 py-3 rounded-lg focus:outline-none text-white placeholder:text-[#52525b]" required />
                                 </GlassInputWrapper>
                             </div>
 
@@ -88,8 +90,12 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                                 </GlassInputWrapper>
                             </div>
 
-                            <button type="submit" className="animate-element animate-delay-600 w-full rounded-lg bg-white/90 hover:bg-white py-3 font-medium text-black transition-colors mt-4 text-[14px] shadow-lg shadow-white/5">
-                                Create Account
+                            <button 
+                                type="submit" 
+                                disabled={isLoading}
+                                className="animate-element animate-delay-600 w-full rounded-lg bg-white/90 hover:bg-white py-3 font-medium text-black transition-colors mt-4 text-[14px] shadow-lg shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? "Creating Account..." : "Create Account"}
                             </button>
                         </form>
 
@@ -119,7 +125,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
                     {/* Image composition */}
                     <div className="relative w-full max-w-[450px] aspect-square flex items-center justify-center">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -60, y: 30, rotate: -5 }}
                             animate={{ opacity: 1, x: -30, y: 20, rotate: -2 }}
                             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
@@ -128,8 +134,8 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                             <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-black/50 to-transparent z-10 pointer-events-none" />
                             <img src={Side1} alt="Preview 1" className="w-full h-full object-cover rounded-2xl shadow-2xl border border-white/5" />
                         </motion.div>
-                        
-                        <motion.div 
+
+                        <motion.div
                             initial={{ opacity: 0, x: 60, y: -30, rotate: 5 }}
                             animate={{ opacity: 1, x: 30, y: -20, rotate: 3 }}
                             transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}

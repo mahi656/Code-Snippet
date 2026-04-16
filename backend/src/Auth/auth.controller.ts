@@ -7,16 +7,32 @@ import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiError';
 
 class AuthController {
+    private generateToken(userId: any): string {
+        const payload = {
+            user: {
+                id: userId
+            }
+        };
+        return jwt.sign(payload, process.env.JWT_SECRET || 'secret123', { expiresIn: '1d' });
+    }
+
     public signup = asyncHandler(async (req: Request, res: Response): Promise<void> => {
         const { fullName, username, email, password } = req.body;
 
-        if (!fullName || !username || !email || !password) {
-            throw new ApiError(400, 'Please provide all required fields');
+        if (!fullName || !username || !password) {
+            throw new ApiError(400, 'Please provide full name, username, and password');
         }
 
-        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+        const existingUser = await User.findOne({
+            $or: [
+                { username },
+                ...(email ? [{ email }] : [])
+            ]
+        });
+
         if (existingUser) {
-            throw new ApiError(400, 'User with this email or username already exists');
+            const field = existingUser.username === username ? 'username' : 'email';
+            throw new ApiError(400, `User with this ${field} already exists`);
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -31,7 +47,17 @@ class AuthController {
 
         await newUser.save();
 
-        res.status(201).json(new ApiResponse(201, null, 'User registered successfully'));
+        const token = this.generateToken(newUser.id);
+
+        res.status(201).json(new ApiResponse(201, {
+            token,
+            user: {
+                id: newUser._id,
+                fullName: newUser.fullName,
+                username: newUser.username,
+                email: newUser.email
+            }
+        }, 'User registered successfully'));
     });
 
     public login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -55,13 +81,7 @@ class AuthController {
             throw new ApiError(400, 'Invalid credentials');
         }
 
-        const payload = {
-            user: {
-                id: user.id
-            }
-        };
-
-        const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret123', { expiresIn: '1d' });
+        const token = this.generateToken(user.id);
 
         res.status(200).json(new ApiResponse(200, {
             token,

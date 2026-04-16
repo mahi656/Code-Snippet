@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { ApiError } from '../utils/ApiError';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -7,12 +8,11 @@ export interface AuthRequest extends Request {
     };
 }
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authMiddleware = (req: any, res: Response, next: NextFunction): void => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-        res.status(401).json({ message: 'No token, authorization denied' });
-        return;
+        return next(new ApiError(401, 'No token, authorization denied'));
     }
 
     try {
@@ -20,6 +20,6 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
         req.user = decoded.user;
         next();
     } catch (error) {
-        res.status(401).json({ message: 'Token is not valid' });
+        next(new ApiError(401, 'Token is not valid'));
     }
 };
