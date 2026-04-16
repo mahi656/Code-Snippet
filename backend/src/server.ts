@@ -10,6 +10,7 @@ import FavoriteRoutes from './Favorite/favorite.route';
 import CalendarRoutes from './Calendar/calendar.route';
 import TagRoutes from './Tag/tag.route';
 import LanguageRoutes from './Language/language.route';
+import SearchRoutes from './Search/search.route';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ class App {
         this.app.use('/api/calendar', CalendarRoutes);
         this.app.use('/api/tags', TagRoutes);
         this.app.use('/api/languages', LanguageRoutes);
+        this.app.use('/api/search', SearchRoutes);
     }
 
     public listen(): void {
