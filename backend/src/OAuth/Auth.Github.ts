@@ -18,7 +18,9 @@ class GithubAuthRoutes {
 
     private githubLogin(req: Request, res: Response): void {
         const clientId = process.env.GITHUB_CLIENT_ID;
-        const redirectUri = encodeURIComponent('http://localhost:5001/OAuth/github/callback');
+        const host = req.get('host');
+        const protocol = req.protocol;
+        const redirectUri = encodeURIComponent(`${protocol}://${host}/OAuth/github/callback`);
         const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email`;
         res.redirect(githubAuthUrl);
     }
@@ -59,12 +61,19 @@ class GithubAuthRoutes {
                     id: user.id
                 }
             };
-            const jwtToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret123', { expiresIn: '1d' });
+            if (!process.env.JWT_SECRET) {
+                throw new Error('JWT_SECRET is not defined');
+            }
+            const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-            res.redirect(`http://localhost:5173/dashboard?token=${jwtToken}&username=${encodeURIComponent(user.username)}`);
+            const clientHostname = req.get('host')?.split(':')[0] || 'localhost';
+            const clientUrl = `http://${clientHostname}:5173`;
+
+            res.redirect(`${clientUrl}/dashboard?token=${jwtToken}&username=${encodeURIComponent(user.username)}`);
         } catch (err: any) {
             console.error('OAuth Error:', err.message);
-            res.redirect('http://localhost:5173/login?error=oauth_failed');
+            const clientHostname = req.get('host')?.split(':')[0] || 'localhost';
+            res.redirect(`http://${clientHostname}:5173/login?error=oauth_failed`);
         }
     }
 }

@@ -1,53 +1,85 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
+import api from '../src/api/api';
+import toast from 'react-hot-toast';
 
 export const QRPanel = ({ onLoginSuccess }) => {
-    const [qrToken, setQrToken] = useState(uuidv4());
+    const [qrToken, setQrToken] = useState('');
     const [qrState, setQrState] = useState('waiting');
-    const [qrCountdown, setQrCountdown] = useState(18);
+    const [qrCountdown, setQrCountdown] = useState(60);
+    const [serverIp, setServerIp] = useState('localhost');
 
     const pollRef = useRef(null);
     const expiryRef = useRef(null);
     const tickRef = useRef(null);
 
     const clearQrTimers = useCallback(() => {
-        if (pollRef.current) clearTimeout(pollRef.current);
+        if (pollRef.current) clearInterval(pollRef.current);
         if (expiryRef.current) clearTimeout(expiryRef.current);
         if (tickRef.current) clearInterval(tickRef.current);
     }, []);
 
-    const startQrSession = useCallback(() => {
+    const startQrSession = useCallback(async () => {
         clearQrTimers();
-        const newToken = uuidv4();
-        setQrToken(newToken);
-        setQrState('waiting');
-        setQrCountdown(18);
 
-        // countdown tick
-        tickRef.current = setInterval(() => {
-            setQrCountdown((prev) => {
-                if (prev <= 1) { clearInterval(tickRef.current); return 0; }
-                return prev - 1;
-            });
-        }, 1000);
+        try {
+            // Ask the backend for the laptop's real networking IP
+            const configRes = await api.get('/auth/qr/config');
+            const { ip } = configRes.data.data;
+            setServerIp(ip || window.location.hostname);
 
-        // mock: auto-login after 7s
-        pollRef.current = setTimeout(() => {
-            setQrState('success');
-            clearQrTimers();
-            // trigger success callback
-            setTimeout(() => onLoginSuccess(), 1500);
-        }, 7000);
+            const response = await api.post('/auth/qr/generate');
+            const { token } = response.data.data;
 
-        // expire after 18s
-        expiryRef.current = setTimeout(() => {
-            clearTimeout(pollRef.current);
-            clearInterval(tickRef.current);
+            setQrToken(token);
+            setQrState('waiting');
+            setQrCountdown(60);
+
+            // 1. Countdown tick
+            tickRef.current = setInterval(() => {
+                setQrCountdown((prev) => {
+                    if (prev <= 1) { clearInterval(tickRef.current); return 0; }
+                    return prev - 1;
+                });
+            }, 1000);
+
+            // 2. Real Polling logic
+            pollRef.current = setInterval(async () => {
+                try {
+                    const statusRes = await api.get(`/auth/qr/status/${token}`);
+                    const { status, token: jwt, user } = statusRes.data.data;
+
+                    if (status === 'verified' && jwt) {
+                        setQrState('success');
+                        clearQrTimers();
+
+                        // Store the data similar to manual login
+                        localStorage.setItem('token', jwt);
+                        localStorage.setItem('username', user.username);
+
+                        toast.success('QR Login Successful!');
+
+                        // trigger success callback after a short delay to show success UI
+                        setTimeout(() => onLoginSuccess(), 1500);
+                    }
+                } catch (err) {
+                    // If session not found or expired on backend
+                    setQrState('expired');
+                    clearQrTimers();
+                }
+            }, 3000);
+
+            // 3. Frontend safety expiry after 60s
+            expiryRef.current = setTimeout(() => {
+                setQrState('expired');
+                clearQrTimers();
+            }, 60000);
+
+        } catch (error) {
+            toast.error('Failed to initialize QR session');
             setQrState('expired');
-            setQrCountdown(0);
-        }, 18000);
+        }
     }, [clearQrTimers, onLoginSuccess]);
 
     useEffect(() => {
@@ -55,21 +87,35 @@ export const QRPanel = ({ onLoginSuccess }) => {
         return clearQrTimers;
     }, [startQrSession, clearQrTimers]);
 
+    // Update the QR value to the verification URL using the local IP
+    const qrValue = `http://${serverIp}:5173/qr-verify?token=${qrToken}`;
+
     return (
         <div className="absolute inset-4 rounded-3xl bg-[#0a0a0a] border border-[#27272a] flex flex-col items-center justify-center gap-6">
             {/* QR Waiting State */}
             {qrState === 'waiting' && (
                 <>
+                    {/* Security Tip */}
+                    <div className="absolute top-6 px-4 py-1.5 bg-[#a78bfa]/10 border border-[#a78bfa]/20 rounded-full">
+                        <p className="text-[10px] text-[#a78bfa] font-medium tracking-wide uppercase">Secure Local Connection</p>
+                    </div>
+
                     <div className="relative group">
                         <div className="absolute -inset-4 rounded-2xl bg-gradient-to-br from-[#a78bfa]/20 via-[#7c3aed]/10 to-[#c4b5fd]/20 blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
                         <div className="relative bg-white p-5 rounded-2xl shadow-2xl">
-                            <QRCodeSVG
-                                value={`${window.location.origin}/qr-login?token=${qrToken}`}
-                                size={200}
-                                level="H"
-                                bgColor="#ffffff"
-                                fgColor="#0f0f0f"
-                            />
+                            {qrToken ? (
+                                <QRCodeSVG
+                                    value={qrValue}
+                                    size={200}
+                                    level="H"
+                                    bgColor="#ffffff"
+                                    fgColor="#0f0f0f"
+                                />
+                            ) : (
+                                <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg">
+                                    <div className="w-8 h-8 border-4 border-[#a78bfa]/30 border-t-[#a78bfa] rounded-full animate-spin" />
+                                </div>
+                            )}
                         </div>
                     </div>
                     {/* Progress bar */}
@@ -77,18 +123,23 @@ export const QRPanel = ({ onLoginSuccess }) => {
                         <div
                             className="h-full rounded-full transition-all duration-1000 ease-linear"
                             style={{
-                                width: `${(qrCountdown / 18) * 100}%`,
-                                background: qrCountdown > 5 ? 'linear-gradient(90deg, #a78bfa, #7c3aed)' : 'linear-gradient(90deg, #ef4444, #f97316)',
+                                width: `${(qrCountdown / 60) * 100}%`,
+                                background: qrCountdown > 15 ? 'linear-gradient(90deg, #a78bfa, #7c3aed)' : 'linear-gradient(90deg, #ef4444, #f97316)',
                             }}
                         />
                     </div>
                     {/* Scanning indicator */}
-                    <div className="flex items-center gap-2.5">
-                        <div className="relative flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#a78bfa] opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#a78bfa]" />
+                    <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex items-center gap-2.5">
+                            <div className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#a78bfa] opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#a78bfa]" />
+                            </div>
+                            <p className="text-sm text-[#a1a1aa]">Waiting for scan… <span className="text-[#52525b] font-mono">{qrCountdown}s</span></p>
                         </div>
-                        <p className="text-sm text-[#a1a1aa]">Waiting for scan… <span className="text-[#52525b] font-mono">{qrCountdown}s</span></p>
+                        {serverIp !== 'localhost' && (
+                            <p className="text-[11px] text-[#3f3f46] font-mono">Host IP: {serverIp}</p>
+                        )}
                     </div>
                 </>
             )}

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../api/api";
 import { cn } from "@/lib/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Eye, EyeOff, Github } from 'lucide-react';
@@ -383,7 +384,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ className }) => {
                                     {/* button to login via github */}
                                     <div className="space-y-4">
                                         <button
-                                            onClick={() => window.location.href = 'http://localhost:5001/OAuth/github'}
+                                            onClick={() => window.location.href = `${API_BASE_URL}/OAuth/github`}
                                             className="backdrop-blur-[2px] w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-full py-3 px-4 transition-colors">
                                             <Github className="w-5 h-5" />
                                             <span>Continue with GitHub</span>

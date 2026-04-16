@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../src/api/api';
 import { ArrowLeft, MoreHorizontal, MapPin, CalendarDays, FileText, Download, Award, Users, BookOpen } from 'lucide-react';
 
 export const ProfilePage = ({ onBack, isDark }) => {
@@ -15,15 +16,10 @@ export const ProfilePage = ({ onBack, isDark }) => {
           return;
         }
 
-        const response = await fetch(`http://localhost:5001/auth/${username}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await api.get(`/auth/${username}`);
 
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
+        if (response.data) {
+          setUserData(response.data);
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);

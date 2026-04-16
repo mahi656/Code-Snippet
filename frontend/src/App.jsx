@@ -5,6 +5,7 @@ import FrontAnimate from '../FrontAnimate/FrontAnimate'
 import Login from "../Login/Login.jsx"
 import Signup from "../Signup/Signup.jsx"
 import Dashboard from "./components/ui/dashboard-with-collapsible-sidebar.tsx"
+import QRVerify from "./components/auth/QRVerify.jsx"
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/qr-login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/qr-verify" element={<QRVerify />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

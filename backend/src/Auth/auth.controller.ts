@@ -5,17 +5,9 @@ import User, { IUser } from './auth.model';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiError';
+import { generateToken } from './token.util';
 
 class AuthController {
-    private generateToken(userId: any): string {
-        const payload = {
-            user: {
-                id: userId
-            }
-        };
-        return jwt.sign(payload, process.env.JWT_SECRET || 'secret123', { expiresIn: '1d' });
-    }
-
     public signup = asyncHandler(async (req: Request, res: Response): Promise<void> => {
         const { fullName, username, email, password } = req.body;
 
@@ -47,7 +39,7 @@ class AuthController {
 
         await newUser.save();
 
-        const token = this.generateToken(newUser.id);
+        const token = generateToken(newUser._id);
 
         res.status(201).json(new ApiResponse(201, {
             token,
@@ -81,7 +73,7 @@ class AuthController {
             throw new ApiError(400, 'Invalid credentials');
         }
 
-        const token = this.generateToken(user.id);
+        const token = generateToken(user._id);
 
         res.status(200).json(new ApiResponse(200, {
             token,

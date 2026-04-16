@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SignInPage as FullSignInPage } from '../src/components/ui/sign-in.tsx';
-import axios from 'axios';
+import api, { API_BASE_URL } from '../src/api/api';
 import toast from 'react-hot-toast';
 
 export const Login = () => {
@@ -19,7 +19,7 @@ export const Login = () => {
     const password = formData.get('password');
 
     try {
-      const response = await axios.post('http://localhost:5001/auth/login', {
+      const response = await api.post('/auth/login', {
         email,
         password
       });
@@ -56,7 +56,7 @@ export const Login = () => {
         description="Access your account and continue your journey with us"
         onSignIn={handleSignIn}
         onGithubSignIn={() => {
-          window.location.href = 'http://localhost:5001/OAuth/github';
+          window.location.href = `${API_BASE_URL}/OAuth/github`;
         }}
         onCreateAccount={() => navigate('/signup')}
         isLoading={isLoading}

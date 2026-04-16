@@ -14,8 +14,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    host: true,
     proxy: {
-      '/OAuth': 'http://localhost:5001',
+      '/OAuth': 'http://127.0.0.1:5001',
     },
   },
   resolve: {
