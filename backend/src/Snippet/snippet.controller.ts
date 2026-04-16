@@ -60,7 +60,7 @@ class SnippetController {
     public async getMySnippets(req: AuthRequest, res: Response): Promise<void> {
         try {
             const userId = req.user?.id;
-            const snippets = await Snippet.find({ userId }).sort({ createdAt: -1 });
+            const snippets = await Snippet.find({ userId, isDeleted: false }).sort({ createdAt: -1 });
             res.status(200).json(snippets);
         } catch (error) {
             console.error('Error fetching snippets:', error);
@@ -73,7 +73,7 @@ class SnippetController {
             const { id } = req.params;
             const userId = req.user?.id;
 
-            const snippet = await Snippet.findOne({ _id: id, userId });
+            const snippet = await Snippet.findOne({ _id: id, userId, isDeleted: false });
             if (!snippet) {
                 res.status(404).json({ message: 'Snippet not found' });
                 return;
@@ -93,7 +93,7 @@ class SnippetController {
             const updates = req.body;
 
             const snippet = await Snippet.findOneAndUpdate(
-                { _id: id, userId },
+                { _id: id, userId, isDeleted: false },
                 { $set: updates },
                 { new: true, runValidators: true }
             );
@@ -113,19 +113,24 @@ class SnippetController {
         }
     }
 
+    // Soft-delete: moves snippet to trash instead of permanent deletion
     public async deleteSnippet(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { id } = req.params;
             const userId = req.user?.id;
 
-            const snippet = await Snippet.findOneAndDelete({ _id: id, userId });
+            const snippet = await Snippet.findOneAndUpdate(
+                { _id: id, userId, isDeleted: false },
+                { $set: { isDeleted: true, deletedAt: new Date() } },
+                { new: true }
+            );
 
             if (!snippet) {
                 res.status(404).json({ message: 'Snippet not found or unauthorized' });
                 return;
             }
 
-            res.status(200).json({ message: 'Snippet deleted successfully' });
+            res.status(200).json({ message: 'Snippet moved to trash' });
         } catch (error) {
             console.error('Error deleting snippet:', error);
             res.status(500).json({ message: 'Server error deleting snippet' });

@@ -14,6 +14,8 @@ export interface ISnippet extends Document {
     calendarDate?: Date;
     changeNote?: string;
     attachments?: string[];
+    isDeleted: boolean;
+    deletedAt?: Date;
     userId: mongoose.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -38,6 +40,8 @@ const SnippetSchema: Schema = new Schema({
     calendarDate: { type: Date },
     changeNote: { type: String },
     attachments: { type: [String], default: [] },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 
