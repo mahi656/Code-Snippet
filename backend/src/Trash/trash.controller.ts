@@ -1,86 +1,62 @@
 import { Response } from 'express';
 import { AuthRequest } from '../Auth/auth.middleware';
 import Snippet from '../Snippet/snippet.model';
+import { asyncHandler } from '../utils/asyncHandler';
+import { ApiResponse } from '../utils/ApiResponse';
+import { ApiError } from '../utils/ApiError';
 
 class TrashController {
 
     // Get all trashed snippets for the user
-    public async getTrashedSnippets(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const userId = req.user?.id;
+    public getTrashedSnippets = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.id;
 
-            const trashed = await Snippet.find({ userId, isDeleted: true })
-                .sort({ deletedAt: -1 });
+        const trashed = await Snippet.find({ userId, isDeleted: true })
+            .sort({ deletedAt: -1 });
 
-            res.status(200).json(trashed);
-        } catch (error) {
-            console.error('Error fetching trashed snippets:', error);
-            res.status(500).json({ message: 'Server error fetching trashed snippets' });
-        }
-    }
+        res.status(200).json(new ApiResponse(200, trashed, 'Trashed snippets fetched successfully'));
+    });
 
     // Restore a snippet from trash
-    public async restoreSnippet(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.id;
+    public restoreSnippet = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { id } = req.params;
+        const userId = req.user?.id;
 
-            const snippet = await Snippet.findOneAndUpdate(
-                { _id: id, userId, isDeleted: true },
-                { $set: { isDeleted: false }, $unset: { deletedAt: '' } },
-                { new: true }
-            );
+        const snippet = await Snippet.findOneAndUpdate(
+            { _id: id, userId, isDeleted: true },
+            { $set: { isDeleted: false }, $unset: { deletedAt: '' } },
+            { new: true }
+        );
 
-            if (!snippet) {
-                res.status(404).json({ message: 'Trashed snippet not found' });
-                return;
-            }
-
-            res.status(200).json({
-                message: 'Snippet restored successfully',
-                snippet
-            });
-        } catch (error) {
-            console.error('Error restoring snippet:', error);
-            res.status(500).json({ message: 'Server error restoring snippet' });
+        if (!snippet) {
+            throw new ApiError(404, 'Trashed snippet not found');
         }
-    }
+
+        res.status(200).json(new ApiResponse(200, { snippet }, 'Snippet restored successfully'));
+    });
 
     // Permanently delete a snippet from trash
-    public async permanentlyDelete(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.id;
+    public permanentlyDelete = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { id } = req.params;
+        const userId = req.user?.id;
 
-            const snippet = await Snippet.findOneAndDelete({ _id: id, userId, isDeleted: true });
+        const snippet = await Snippet.findOneAndDelete({ _id: id, userId, isDeleted: true });
 
-            if (!snippet) {
-                res.status(404).json({ message: 'Trashed snippet not found' });
-                return;
-            }
-
-            res.status(200).json({ message: 'Snippet permanently deleted' });
-        } catch (error) {
-            console.error('Error permanently deleting snippet:', error);
-            res.status(500).json({ message: 'Server error permanently deleting snippet' });
+        if (!snippet) {
+            throw new ApiError(404, 'Trashed snippet not found');
         }
-    }
+
+        res.status(200).json(new ApiResponse(200, null, 'Snippet permanently deleted'));
+    });
 
     // Empty entire trash for the user
-    public async emptyTrash(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const userId = req.user?.id;
+    public emptyTrash = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.id;
 
-            const result = await Snippet.deleteMany({ userId, isDeleted: true });
+        const result = await Snippet.deleteMany({ userId, isDeleted: true });
 
-            res.status(200).json({
-                message: `Permanently deleted ${result.deletedCount} snippet(s) from trash`
-            });
-        } catch (error) {
-            console.error('Error emptying trash:', error);
-            res.status(500).json({ message: 'Server error emptying trash' });
-        }
-    }
+        res.status(200).json(new ApiResponse(200, null, `Permanently deleted ${result.deletedCount} snippet(s) from trash`));
+    });
 }
 
 export default new TrashController();

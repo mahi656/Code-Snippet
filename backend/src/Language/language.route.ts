@@ -11,6 +11,6 @@ router.use(authMiddleware as any);
 router.get('/', LanguageController.getMyLanguages);
 
 // Get snippets filtered by language name
-router.get('/snippets/:languageName', LanguageController.getSnippetsByLanguage);
+router.get('/:languageName/snippets', LanguageController.getSnippetsByLanguage);
 
 export default router;

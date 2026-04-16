@@ -8,7 +8,7 @@ const router = Router();
 router.use(authMiddleware as any);
 
 router.post('/', VersionController.createVersion);
-router.get('/snippet/:snippetId', VersionController.getVersionsBySnippet);
+router.get('/snippets/:snippetId', VersionController.getVersionsBySnippet);
 router.get('/:id', VersionController.getVersionById);
 router.delete('/:id', VersionController.deleteVersion);
 

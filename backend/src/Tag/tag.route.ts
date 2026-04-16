@@ -11,6 +11,6 @@ router.use(authMiddleware as any);
 router.get('/', TagController.getMyTags);
 
 // Get snippets filtered by tag name
-router.get('/snippets/:tagName', TagController.getSnippetsByTag);
+router.get('/:tagName/snippets', TagController.getSnippetsByTag);
 
 export default router;

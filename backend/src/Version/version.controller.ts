@@ -1,86 +1,63 @@
 import { Response } from 'express';
 import { AuthRequest } from '../Auth/auth.middleware';
 import Version from './version.model';
+import { asyncHandler } from '../utils/asyncHandler';
+import { ApiResponse } from '../utils/ApiResponse';
+import { ApiError } from '../utils/ApiError';
 
 class VersionController {
-    public async createVersion(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const { snippetId, code, changeNote } = req.body;
-            const userId = req.user?.id;
+    public createVersion = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { snippetId, code, changeNote } = req.body;
+        const userId = req.user?.id;
 
-            if (!snippetId || !code) {
-                res.status(400).json({ message: 'Snippet ID and code are required' });
-                return;
-            }
-
-            const newVersion = new Version({
-                snippetId,
-                code,
-                changeNote,
-                userId
-            });
-
-            await newVersion.save();
-
-            res.status(201).json({
-                message: 'Version created successfully',
-                version: newVersion
-            });
-        } catch (error) {
-            console.error('Error creating version:', error);
-            res.status(500).json({ message: 'Server error creating version' });
+        if (!snippetId || !code) {
+            throw new ApiError(400, 'Snippet ID and code are required');
         }
-    }
 
-    public async getVersionsBySnippet(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const { snippetId } = req.params;
-            const userId = req.user?.id;
+        const newVersion = new Version({
+            snippetId,
+            code,
+            changeNote,
+            userId
+        });
 
-            const versions = await Version.find({ snippetId, userId }).sort({ createdAt: -1 });
-            res.status(200).json(versions);
-        } catch (error) {
-            console.error('Error fetching versions:', error);
-            res.status(500).json({ message: 'Server error fetching versions' });
+        await newVersion.save();
+
+        res.status(201).json(new ApiResponse(201, { version: newVersion }, 'Version created successfully'));
+    });
+
+    public getVersionsBySnippet = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { snippetId } = req.params;
+        const userId = req.user?.id;
+
+        const versions = await Version.find({ snippetId, userId }).sort({ createdAt: -1 });
+        res.status(200).json(new ApiResponse(200, versions, 'Versions fetched successfully'));
+    });
+
+    public getVersionById = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { id } = req.params;
+        const userId = req.user?.id;
+
+        const version = await Version.findOne({ _id: id, userId });
+        if (!version) {
+            throw new ApiError(404, 'Version not found');
         }
-    }
 
-    public async getVersionById(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.id;
+        res.status(200).json(new ApiResponse(200, version, 'Version fetched successfully'));
+    });
 
-            const version = await Version.findOne({ _id: id, userId });
-            if (!version) {
-                res.status(404).json({ message: 'Version not found' });
-                return;
-            }
+    public deleteVersion = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { id } = req.params;
+        const userId = req.user?.id;
 
-            res.status(200).json(version);
-        } catch (error) {
-            console.error('Error fetching version:', error);
-            res.status(500).json({ message: 'Server error fetching version' });
+        const version = await Version.findOneAndDelete({ _id: id, userId });
+
+        if (!version) {
+            throw new ApiError(404, 'Version not found or unauthorized');
         }
-    }
 
-    public async deleteVersion(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.id;
-
-            const version = await Version.findOneAndDelete({ _id: id, userId });
-
-            if (!version) {
-                res.status(404).json({ message: 'Version not found or unauthorized' });
-                return;
-            }
-
-            res.status(200).json({ message: 'Version deleted successfully' });
-        } catch (error) {
-            console.error('Error deleting version:', error);
-            res.status(500).json({ message: 'Server error deleting version' });
-        }
-    }
+        res.status(200).json(new ApiResponse(200, null, 'Version deleted successfully'));
+    });
 }
 
 export default new VersionController();

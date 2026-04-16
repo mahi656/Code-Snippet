@@ -10,7 +10,7 @@ router.use(authMiddleware as any);
 router.get('/', TrashController.getTrashedSnippets);
 
 // Restore a snippet from trash
-router.patch('/restore/:id', TrashController.restoreSnippet);
+router.patch('/:id/restore', TrashController.restoreSnippet);
 
 // Permanently delete a single snippet
 router.delete('/:id', TrashController.permanentlyDelete);
