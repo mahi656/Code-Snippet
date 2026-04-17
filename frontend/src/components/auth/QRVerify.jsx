@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../api/api';
-import toast from 'react-hot-toast';
+import { toast } from '../ui/Notification.jsx';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
 
@@ -14,7 +14,7 @@ export const QRVerify = () => {
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         if (!storedToken) {
-            toast.error('Please log in on this device first');
+            toast('Please log in on this device first', 'error');
             // Redirect to login but remember where we wanted to go
             navigate(`/login?redirect=qr-verify&token=${token}`);
             return;
@@ -35,20 +35,20 @@ export const QRVerify = () => {
             await api.post('/auth/qr/verify', { token });
 
             setStatus('success');
-            toast.success('Login Authorized!');
-            
+            toast('Login Authorized!', 'success');
+
             // Redirect to dashboard after 2s
             setTimeout(() => navigate('/dashboard'), 2000);
-        } catch (error) {
-            const msg = error.response?.data?.message || 'Verification failed';
-            toast.error(msg);
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Verification failed';
+            toast(msg, 'error');
             setStatus('error');
         }
     };
 
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-6 font-geist">
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-sm bg-[#09090b] border border-[#27272a] rounded-3xl p-8 text-center space-y-6 shadow-2xl"

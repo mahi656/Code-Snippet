@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SignUpPage as FullSignUpPage } from '../src/components/ui/sign-up.tsx';
 import api, { API_BASE_URL } from '../src/api/api';
-import toast from 'react-hot-toast';
+import { toast } from '../src/components/ui/Notification.jsx';
 
 export const Signup = () => {
     const navigate = useNavigate();
@@ -21,6 +21,12 @@ export const Signup = () => {
         const email = formData.get('email');
         const password = formData.get('password');
 
+        if (!fullName || !username || !email || !password) {
+            setIsLoading(false);
+            toast('Please fill in all required fields', 'error');
+            return;
+        }
+
         try {
             const response = await api.post('/auth/signup', {
                 fullName,
@@ -30,7 +36,7 @@ export const Signup = () => {
             });
 
             if (response.data.success) {
-                toast.success('Account created successfully!');
+                toast('Account created successfully!', 'success');
                 localStorage.setItem('token', response.data.data.token);
                 localStorage.setItem('username', response.data.data.user.username);
 
@@ -44,7 +50,7 @@ export const Signup = () => {
         } catch (error) {
             setIsLoading(false);
             const errorMessage = error.response?.data?.message || 'Failed to sign up';
-            toast.error(errorMessage);
+            toast(errorMessage, 'error');
         }
     };
 

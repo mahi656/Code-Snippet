@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SignInPage as FullSignInPage } from '../src/components/ui/sign-in.tsx';
 import api, { API_BASE_URL } from '../src/api/api';
-import toast from 'react-hot-toast';
+import { toast } from '../src/components/ui/Notification.jsx';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -18,6 +18,12 @@ export const Login = () => {
     const email = formData.get('email');
     const password = formData.get('password');
 
+    if (!email || !password) {
+      setIsLoading(false);
+      toast('Please enter both email and password', 'error');
+      return;
+    }
+
     try {
       const response = await api.post('/auth/login', {
         email,
@@ -25,7 +31,7 @@ export const Login = () => {
       });
 
       if (response.data.success) {
-        toast.success('Logged in successfully!');
+        toast('Logged in successfully!', 'success');
         localStorage.setItem('token', response.data.data.token);
         localStorage.setItem('username', response.data.data.user.username);
 
@@ -39,7 +45,7 @@ export const Login = () => {
     } catch (error) {
       setIsLoading(false);
       const errorMessage = error.response?.data?.message || 'Failed to login';
-      toast.error(errorMessage);
+      toast(errorMessage, 'error');
     }
   };
 

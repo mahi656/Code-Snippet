@@ -55,7 +55,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                         <h1 className="animate-element animate-delay-100 text-5xl font-normal leading-tight text-white mb-2">{title}</h1>
                         <p className="animate-element animate-delay-200 text-[#a1a1aa] text-[15px]">{description}</p>
 
-                        <form className="space-y-4 mt-6" onSubmit={onSignUp}>
+                        <form className="space-y-4 mt-6" onSubmit={onSignUp} noValidate>
                             <div className="grid grid-cols-2 gap-4 animate-element animate-delay-300">
                                 <div>
                                     <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Full Name <span className="text-red-500">*</span></label>

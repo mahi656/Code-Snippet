@@ -1,42 +1,19 @@
+import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { Toaster } from 'react-hot-toast'
 import './App.css'
-import FrontAnimate from '../FrontAnimate/FrontAnimate'
+import FrontAnimate from '../FrontAnimate/FrontAnimate.jsx'
 import Login from "../Login/Login.jsx"
 import Signup from "../Signup/Signup.jsx"
-import Dashboard from "./components/ui/dashboard-with-collapsible-sidebar.tsx"
+import Dashboard from "./components/ui/dashboard-with-collapsible-sidebar"
 import QRVerify from "./components/auth/QRVerify.jsx"
+import { Notification } from './components/ui/Notification.jsx'
+import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 
 function App() {
   return (
-    <>
-      <Toaster 
-        position="top-center" 
-        reverseOrder={false}
-        toastOptions={{
-          duration: 4000,
-          className: 'bg-[#18181b] text-white border border-[#27272a] rounded-2xl shadow-2xl font-sans text-sm font-medium px-4 py-3',
-          style: {
-            background: '#18181b',
-            color: '#fff',
-            border: '1px solid #27272a',
-            borderRadius: '1rem',
-          },
-          success: {
-            iconTheme: {
-              primary: '#a78bfa',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-        }} 
-      />
+    <ErrorBoundary>
       <Router>
+        <Notification />
         <Routes>
           <Route path="/" element={<FrontAnimate />} />
           <Route path="/login" element={<Login />} />
@@ -47,7 +24,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </>
+    </ErrorBoundary>
   )
 }
 

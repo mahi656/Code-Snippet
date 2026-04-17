@@ -113,7 +113,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                         {/* Email Login Mode - original form */}
                         {loginMode === 'email' && (
                             <>
-                                <form className="space-y-4 mt-6" onSubmit={onSignIn}>
+                                <form className="space-y-4 mt-6" onSubmit={onSignIn} noValidate>
                                     <div className="animate-element animate-delay-300">
                                         <label className="block text-[13px] font-medium text-[#a1a1aa] mb-1.5 flex items-center gap-1">Email <span className="text-red-500">*</span></label>
                                         <GlassInputWrapper>
@@ -135,20 +135,19 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
                                     <div className="animate-element animate-delay-500 flex items-center justify-between text-sm pt-2">
                                         <label className="flex items-center gap-3 cursor-pointer group">
-                                            <div 
+                                            <div
                                                 onClick={() => setRememberMe(!rememberMe)}
-                                                className={`w-[18px] h-[18px] rounded-full border transition-all duration-200 flex items-center justify-center ${
-                                                    rememberMe 
-                                                    ? 'bg-[#a78bfa] border-[#a78bfa] shadow-[0_0_10px_rgba(167,139,250,0.3)]' 
+                                                className={`w-[18px] h-[18px] rounded-full border transition-all duration-200 flex items-center justify-center ${rememberMe
+                                                    ? 'bg-[#a78bfa] border-[#a78bfa] shadow-[0_0_10px_rgba(167,139,250,0.3)]'
                                                     : 'border-[#3f3f46] bg-[#0f0f0f] group-hover:border-[#71717a]'
-                                                }`}
+                                                    }`}
                                             >
-                                                <input 
-                                                    type="checkbox" 
-                                                    name="rememberMe" 
+                                                <input
+                                                    type="checkbox"
+                                                    name="rememberMe"
                                                     checked={rememberMe}
                                                     onChange={(e) => setRememberMe(e.target.checked)}
-                                                    className="opacity-0 absolute w-0 h-0" 
+                                                    className="opacity-0 absolute w-0 h-0"
                                                 />
                                                 {rememberMe && <Check className="w-3 h-3 text-white stroke-[3px]" />}
                                             </div>
@@ -157,8 +156,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                                         <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="text-[#a78bfa] hover:text-[#c4b5fd] text-[13px] transition-colors font-medium">Reset password?</a>
                                     </div>
 
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         disabled={isLoading}
                                         className="animate-element animate-delay-600 w-full rounded-lg bg-white/90 hover:bg-white py-3 font-medium text-black transition-colors mt-4 text-[14px] shadow-lg shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
