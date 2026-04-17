@@ -2,8 +2,9 @@ import React, { useState, useRef } from 'react';
 import { Save, X, Code, Tag, AlignLeft, ChevronDown, Layers, Package, Globe, Lock, Star, Folder, Calendar, Paperclip, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, isToday, addDays } from 'date-fns';
 import Editor from '@monaco-editor/react';
-import DuplicateError from '../Error/DuplicateError.jsx';
-import { checkTitleCompulsory } from '../Error/TitleCompulsory.jsx';
+// Removed legacy error components
+import api from '../../api/api';
+import { toast } from '../ui/Notification.jsx';
 
 const LANGUAGES = [
   { value: "javascript", label: "JavaScript" },
@@ -181,6 +182,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
 
   // This stores any error message we want to show the user (like "Title is required")
   const [errorText, setErrorText] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // This is one big object that holds all the information the user types into the form
   const [formData, setFormData] = useState({
@@ -231,45 +233,77 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
   };
 
   // This function runs when the user clicks the "Save Snippet" button
-  const handleSubmit = (e) => {
-    e.preventDefault(); // This stops the page from refreshing
-    setErrorText(""); // Clear any old errors
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.(); // This stops the page from refreshing if called as a form submit
+    
+    if (isSaving) return;
+    setErrorText("");
 
-    // Step 1: Check if the user forgot to give the snippet a name
-    const titleError = checkTitleCompulsory(formData.title);
-    if (titleError) {
-      setErrorText(titleError);
-      return;
-    }
+    try {
+      // Step 1: Check if the user forgot to give the snippet a name
+      const title = formData.title?.trim();
+      if (!title) {
+        toast("Snippet title is required!", "error");
+        return;
+      }
 
-    // Step 2: Check if this name is already taken by another snippet
-    const isDuplicateTitle = existingSnippets.some(
-      (snippet) => snippet.title.toLowerCase() === formData.title.trim().toLowerCase()
-    );
+      // Step 2: Check for existing snippets (defensive coding)
+      const snippets = Array.isArray(existingSnippets) ? existingSnippets : [];
 
-    if (isDuplicateTitle) {
-      setErrorText(`Wait! A snippet with the title "${formData.title.trim()}" already exists.`);
-      return;
-    }
+      // Duplicate Title Check
+      const isDuplicateTitle = snippets.some(
+        (s) => s.title?.toLowerCase() === title.toLowerCase()
+      );
 
-    // Step 3: Check if the user is trying to save the exact same code twice
-    const isDuplicateCode = existingSnippets.some(
-      (snippet) => snippet.code.trim() === formData.code.trim()
-    );
+      if (isDuplicateTitle) {
+        toast(`A snippet with the title "${title}" already exists.`, "error");
+        return;
+      }
 
-    if (isDuplicateCode) {
-      setErrorText("Oops! This EXACT code is already saved in another snippet.");
-      return;
-    }
+      // Duplicate Code Check
+      const code = formData.code?.trim();
+      // Only warn if they've actually typed something beyond the default comment
+      if (code && code !== '// Start coding here...') {
+        const isDuplicateCode = snippets.some(
+          (s) => s.code?.trim() === code
+        );
 
-    // Step 4: If everything is okay, we save the snippet
-    // We also turn the "tags" string into a clean list (array) here
-    if (onSave) {
-      onSave({
+        if (isDuplicateCode) {
+          toast("This exact code is already saved in another snippet.", "error");
+          return;
+        }
+      }
+
+      // Step 4: If everything is okay, we save the snippet
+      setIsSaving(true);
+      
+      const payload = {
         ...formData,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
-        createdAt: new Date().toISOString()
-      });
+        title: title,
+        code: formData.code || '',
+        tags: typeof formData.tags === 'string' 
+          ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) 
+          : [],
+      };
+
+      const response = await api.post('/api/snippets/', payload);
+
+      if (response.data && response.data.success) {
+        toast('Snippet saved successfully!', 'success');
+        if (onSave) {
+          // Pass the snippet from response.data.data.snippet
+          onSave(response.data.data.snippet);
+        }
+      } else {
+        throw new Error("Failed to save. Backend responded with success: false");
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      const errMsg = err.response?.data?.message || err.message || "Failed to save snippet.";
+      toast(errMsg, 'error');
+      setErrorText(errMsg);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -293,18 +327,22 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
           </button>
           <button
             onClick={handleSubmit}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#7c3aed] hover:bg-[#8b5cf6] text-[14px] font-medium text-white shadow-[0_10px_20px_-10px_rgba(124,58,237,0.5)] transition-all duration-200 active:scale-[0.98] group"
+            disabled={isSaving}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#7c3aed] hover:bg-[#8b5cf6] text-[14px] font-medium text-white shadow-[0_10px_20px_-10px_rgba(124,58,237,0.5)] transition-all duration-200 active:scale-[0.98] group disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Save className="h-4 w-4 text-white/90 group-hover:scale-110 transition-transform" />
-            {isEditing ? 'Save as New Version' : 'Save Snippet'}
+            {isSaving ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <Save className="h-4 w-4 text-white/90 group-hover:scale-110 transition-transform" />
+            )}
+            {isSaving ? 'Saving...' : (isEditing ? 'Save as New Version' : 'Save Snippet')}
           </button>
         </div>
       </div>
 
       {/* Main Form Content */}
       <div className="flex-1 overflow-auto p-8">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6 pb-12">
-          <DuplicateError message={errorText} onClose={() => setErrorText("")} />
+        <form onSubmit={handleSubmit} noValidate className="max-w-4xl mx-auto space-y-6 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Title */}
