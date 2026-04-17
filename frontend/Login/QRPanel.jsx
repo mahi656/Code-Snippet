@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion } from 'framer-motion';
 import api from '../src/api/api';
-import toast from 'react-hot-toast';
+import { toast } from '../src/components/ui/Notification.jsx';
 
 export const QRPanel = ({ onLoginSuccess }) => {
     const [qrToken, setQrToken] = useState('');
@@ -58,7 +58,7 @@ export const QRPanel = ({ onLoginSuccess }) => {
                         localStorage.setItem('token', jwt);
                         localStorage.setItem('username', user.username);
 
-                        toast.success('QR Login Successful!');
+                        toast('QR Login Successful!', 'success');
 
                         // trigger success callback after a short delay to show success UI
                         setTimeout(() => onLoginSuccess(), 1500);
@@ -77,7 +77,7 @@ export const QRPanel = ({ onLoginSuccess }) => {
             }, 60000);
 
         } catch (error) {
-            toast.error('Failed to initialize QR session');
+            toast('Failed to initialize QR session', 'error');
             setQrState('expired');
         }
     }, [clearQrTimers, onLoginSuccess]);

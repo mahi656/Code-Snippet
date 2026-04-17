@@ -28,14 +28,111 @@ import {
 import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
 import NewSnippet from "../Snippet/NewSnippet.jsx";
 import { ProfilePage } from "../../../Profile/Profile.jsx";
+import { motion, AnimatePresence } from "framer-motion";
+import SnippetCard from "../Snippet/SnippetCard.jsx";
+import api from "../../api/api";
+import { toast } from "./Notification.jsx";
 
 export const Example = () => {
+  console.log("Dashboard (Example) Rendering...");
   const [isDark, setIsDark] = useState(true);
   const [selected, setSelected] = useState("All Snippets");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Real project implementation: Store our created snippets globally!
   const [globalSnippets, setGlobalSnippets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const fetchSnippets = async (tab = selected) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    setIsLoading(true);
+    try {
+      const endpoint = tab === "Trash" ? '/api/trash/' : '/api/snippets/';
+      const response = await api.get(endpoint);
+      if (response.data && response.data.data) {
+        setGlobalSnippets(response.data.data);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      if ((err as any).response?.status !== 401) {
+        toast("Failed to load snippets", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (["All Snippets", "Favorites", "Trash"].includes(selected)) {
+      fetchSnippets(selected);
+    }
+  }, [selected]);
+
+  // Removed redundant useEffect. Fetching is now handled by the Auth Guard below.
+
+  const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
+    try {
+      const response = await api.put(`/api/snippets/${id}`, { isFavorite });
+      if (response.data) {
+        setGlobalSnippets(prev =>
+          prev.map(s => s._id === id ? { ...s, isFavorite } : s)
+        );
+        toast(isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
+      }
+    } catch (err) {
+      toast("Failed to update snippet", "error");
+    }
+  };
+
+  const handleDeleteSnippet = async (id: string) => {
+    if (deleteId !== id) {
+      setDeleteId(id);
+      return;
+    }
+
+    try {
+      const isPermanent = selected === "Trash";
+      const endpoint = isPermanent ? `/api/trash/${id}` : `/api/snippets/${id}`;
+
+      const response = await api.delete(endpoint);
+      if (response.data) {
+        setGlobalSnippets(prev => prev.filter(s => s._id !== id));
+        toast(isPermanent ? "Snippet permanently deleted" : "Snippet moved to trash", 'success');
+        setDeleteId(null);
+      }
+    } catch (err) {
+      toast("Failed to delete snippet", "error");
+      setDeleteId(null);
+    }
+  };
+
+  const handleRestoreSnippet = async (id: string) => {
+    try {
+      const response = await api.patch(`/api/trash/${id}/restore`);
+      if (response.data) {
+        setGlobalSnippets(prev => prev.filter(s => s._id !== id));
+        toast("Snippet restored successfully", 'success');
+      }
+    } catch (err) {
+      toast("Failed to restore snippet", "error");
+    }
+  };
+
+  const handleEmptyTrash = async () => {
+    try {
+      const response = await api.delete('/api/trash/');
+      if (response.data) {
+        setGlobalSnippets([]);
+        toast("Trash emptied", 'success');
+      }
+    } catch (err) {
+      toast("Failed to empty trash", "error");
+    }
+  };
 
   useEffect(() => {
     if (isDark) {
@@ -60,11 +157,14 @@ export const Example = () => {
       }
       // Remove token from URL
       navigate('/dashboard', { replace: true });
+      fetchSnippets();
     } else {
       // Auth Guard: check if token exists in localStorage
       const storedToken = localStorage.getItem('token');
       if (!storedToken) {
         navigate('/login', { replace: true });
+      } else {
+        fetchSnippets();
       }
     }
   }, [location, navigate]);
@@ -92,27 +192,78 @@ export const Example = () => {
         )}
         {selected === "Calendar" ? (
           <div className="flex-1 bg-[#fffcf9] dark:bg-[#050505] overflow-hidden flex flex-col h-screen">
-            <FullScreenCalendar data={[]} isDark={isDark} setIsDark={setIsDark} />
+            <FullScreenCalendar data={globalSnippets.filter(s => s.showInCalendar)} isDark={isDark} setIsDark={setIsDark} />
           </div>
         ) : selected === "Profile" ? (
           <div className="flex-1 overflow-hidden h-screen flex flex-col bg-white dark:bg-black">
             <ProfilePage onBack={() => setSelected("All Snippets")} isDark={isDark} />
           </div>
         ) : ["All Snippets", "Favorites", "Trash"].includes(selected) ? (
-          <ExampleContent isDark={isDark} setIsDark={setIsDark} selected={selected} isSidebarOpen={isSidebarOpen} />
+          <ExampleContent
+            isDark={isDark}
+            setIsDark={setIsDark}
+            selected={selected}
+            isSidebarOpen={isSidebarOpen}
+            snippets={globalSnippets}
+            isLoading={isLoading}
+            onFavorite={handleToggleFavorite}
+            onDelete={handleDeleteSnippet}
+            onRestore={handleRestoreSnippet}
+            onEmptyTrash={handleEmptyTrash}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
         ) : (
           <div className="flex-1 overflow-hidden h-screen bg-white dark:bg-[#09090b]">
             <NewSnippet
               onCancel={() => setSelected("All Snippets")}
               existingSnippets={globalSnippets}
-              onSave={(snippetData: any) => {
-                setGlobalSnippets([...globalSnippets, snippetData]);
+              onSave={(newSnippet: any) => {
+                setGlobalSnippets(prev => [newSnippet, ...prev]);
                 setSelected("All Snippets");
               }}
             />
           </div>
         )}
       </div>
+
+      {/* AI-Native Delete Confirmation Pill */}
+      <AnimatePresence>
+        {deleteId && (
+          <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1001] w-full max-w-fit px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.9, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: 40, scale: 0.9, filter: 'blur(10px)' }}
+              className="flex items-center gap-6 px-6 py-3 rounded-full bg-zinc-900/95 backdrop-blur-2xl border border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[14px] font-semibold text-white whitespace-nowrap tracking-tight">
+                  {selected === "Trash" ? "Permanently Delete?" : "Move to Trash?"}
+                </span>
+              </div>
+
+              <div className="h-4 w-[1px] bg-white/10" />
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDeleteId(null)}
+                  className="px-4 py-1.5 rounded-full text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteSnippet(deleteId)}
+                  className="px-5 py-1.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-[13px] font-bold shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all active:scale-[0.98]"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -500,27 +651,82 @@ const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen }: any) => {
+const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
+  const safeSnippets = Array.isArray(snippets) ? snippets : [];
+  const filteredSnippets = safeSnippets.filter((s: any) => {
+    const title = s?.title || "";
+    const description = s?.description || "";
+    const language = s?.language || "";
+    
+    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      language.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (selected === "Favorites") return matchesSearch && s?.isFavorite;
+    if (selected === "Trash") return matchesSearch && s?.isDeleted;
+    return matchesSearch && !s?.isDeleted;
+  });
+
   return (
     <div className="flex-1 bg-white dark:bg-black flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className={`h-[4.5rem] flex items-center gap-4 border-b border-gray-100 dark:border-[#27272a] shrink-0 transition-all ${isSidebarOpen ? 'px-8' : 'pl-20 pr-8'}`}>
         <h1 className="text-[22px] font-medium tracking-tight capitalize text-gray-900 dark:text-white flex-1">{selected}</h1>
         <div className="flex items-center gap-5">
+          {selected === "Trash" && snippets.some((s: any) => s.isDeleted) && (
+            <button
+              onClick={onEmptyTrash}
+              className="text-[13px] font-semibold text-red-500 hover:text-red-600 px-4 py-2 rounded-xl hover:bg-red-500/10 transition-all transition-colors mr-2"
+            >
+              Empty Trash
+            </button>
+          )}
           <div className="relative flex items-center">
             <Search className="absolute left-3.5 h-[18px] w-[18px] text-gray-400" />
-            <input type="text" placeholder="Search..." className="h-10 w-72 rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/20 dark:text-white transition-all placeholder:text-[#52525b]" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-10 w-72 rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/20 dark:text-white transition-all placeholder:text-[#52525b]"
+            />
           </div>
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-auto p-8">
-        <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50/50 dark:bg-[#09090b]/50 p-8 shadow-sm flex items-center justify-center h-full min-h-[400px]">
-          <p className="text-gray-500 dark:text-[#a1a1aa] text-[15px]">
-            Content for <strong className="font-semibold text-gray-700 dark:text-gray-300 capitalize">{selected}</strong> goes here.
-          </p>
-        </div>
+      <div className="flex-1 overflow-auto p-8 scrollbar-hide">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="h-48 rounded-2xl bg-gray-100 dark:bg-[#09090b] animate-pulse border border-gray-200 dark:border-[#27272a]"></div>
+            ))}
+          </div>
+        ) : filteredSnippets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {filteredSnippets.map((snippet: any) => (
+              <SnippetCard
+                key={snippet._id}
+                snippet={snippet}
+                isDark={isDark}
+                onFavorite={onFavorite}
+                onDelete={onDelete}
+                onRestore={onRestore}
+                view={selected}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50/50 dark:bg-[#09090b]/50 p-8 shadow-sm flex flex-col items-center justify-center h-full min-h-[400px]">
+            <div className="w-16 h-16 rounded-full bg-gray-200/50 dark:bg-[#27272a]/50 flex items-center justify-center mb-4">
+              <FilePlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+            </div>
+            <p className="text-gray-500 dark:text-[#a1a1aa] text-[15px] font-medium">
+              No snippets found in <strong className="font-semibold text-gray-700 dark:text-gray-300 capitalize">{selected}</strong>.
+            </p>
+            <p className="text-gray-400 dark:text-[#52525b] text-[13px] mt-1">Try creating one or using a different search term.</p>
+          </div>
+        )}
       </div>
     </div>
   );

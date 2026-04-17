@@ -21,7 +21,7 @@ const ShareSchema: Schema = new Schema({
     viewCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
-ShareSchema.index({ shareToken: 1 });
+// Composite index for quick search
 ShareSchema.index({ snippetId: 1, userId: 1 });
 
 export default mongoose.model<IShare>('Share', ShareSchema);
