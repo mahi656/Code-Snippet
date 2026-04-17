@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import cors from 'cors';
+import path from 'path';
 import dotenv from 'dotenv';
 import Database from './config/db';
 import AuthRoutes from './Auth/auth.route';
@@ -11,6 +12,10 @@ import CalendarRoutes from './Calendar/calendar.route';
 import TagRoutes from './Tag/tag.route';
 import LanguageRoutes from './Language/language.route';
 import SearchRoutes from './Search/search.route';
+import TrashRoutes from './Trash/trash.route';
+import DashboardRoutes from './Dashboard/dashboard.route';
+import UploadRoutes from './Upload/upload.route';
+import SharedRoutes from './Shared/share.route';
 
 dotenv.config();
 
@@ -34,6 +39,9 @@ class App {
     private initializeMiddlewares(): void {
         this.app.use(cors());
         this.app.use(express.json());
+
+        // Serve uploaded files as static assets
+        this.app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
     }
 
     private initializeRoutes(): void {
@@ -46,6 +54,10 @@ class App {
         this.app.use('/api/tags', TagRoutes);
         this.app.use('/api/languages', LanguageRoutes);
         this.app.use('/api/search', SearchRoutes);
+        this.app.use('/api/trash', TrashRoutes);
+        this.app.use('/api/dashboard', DashboardRoutes);
+        this.app.use('/api/upload', UploadRoutes);
+        this.app.use('/api/shared', SharedRoutes);
     }
 
     public listen(): void {
