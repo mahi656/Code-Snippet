@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../Auth/auth.middleware';
 import Snippet from './snippet.model';
+import Version from '../Version/version.model';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiError';
@@ -77,7 +78,17 @@ class SnippetController {
             userId
         })
         await newSnippet.save();
-        res.status(201).json(new ApiResponse(201, { snippet: newSnippet }, 'Snippet created successfully'));
+
+        // Feature: Also save this as the "Initial Version" in history
+        const initialVersion = new Version({
+            snippetId: newSnippet._id,
+            code: newSnippet.code,
+            changeNote: 'Initial Version',
+            userId: userId
+        });
+        await initialVersion.save();
+
+        res.status(201).json(new ApiResponse(201, { snippet: newSnippet, version: initialVersion }, 'Snippet created successfully with initial version tracked'));
     });
 
 
@@ -105,7 +116,7 @@ class SnippetController {
     public updateSnippet = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { id } = req.params;
         const userId = req.user?.id;
-        const updates = req.body;
+        const { changeNote, ...updates } = req.body;
 
         // If the title is being changed, make sure the new name isn't already taken
         if (updates.title && userId) {
@@ -123,7 +134,17 @@ class SnippetController {
             throw new ApiError(404, 'Snippet not found or unauthorized');
         }
 
-        res.status(200).json(new ApiResponse(200, { snippet }, 'Snippet updated successfully'));
+        // Feature: Automatically create a new version record for this update
+        // We save the latest code state as a new version
+        const newVersion = new Version({
+            snippetId: snippet._id,
+            code: snippet.code,
+            changeNote: changeNote || 'Updated snippet details',
+            userId: userId
+        });
+        await newVersion.save();
+
+        res.status(200).json(new ApiResponse(200, { snippet, version: newVersion }, 'Snippet updated successfully and new version created'));
     });
 
 

@@ -34,6 +34,18 @@ class VersionController {
         res.status(200).json(new ApiResponse(200, versions, 'Versions fetched successfully'));
     });
 
+    public getMyVersions = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.id;
+
+        // Fetch all versions for the user and populate the snippet title so we know which snippet was edited
+        const versions = await Version.find({ userId })
+            .populate('snippetId', 'title')
+            .sort({ createdAt: -1 })
+            .limit(50); // Limit to last 50 edits for performance
+
+        res.status(200).json(new ApiResponse(200, versions, 'Global history fetched successfully'));
+    });
+
     public getVersionById = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { id } = req.params;
         const userId = req.user?.id;
