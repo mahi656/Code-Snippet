@@ -9,16 +9,21 @@ class SearchService {
             { userId: new mongoose.Types.ObjectId(userId) }
         ];
 
-        // Text search across title, description, tags, code, dependencies
+        // Ensure we only show non-deleted snippets unless specifically searching trash
+        if (filters.isDeleted !== undefined) {
+            conditions.push({ isDeleted: filters.isDeleted === 'true' });
+        } else {
+            conditions.push({ isDeleted: false });
+        }
+
+        // Text search across title, tags, and language
         if (query) {
             const regex = new RegExp(query, 'i');
             conditions.push({
                 $or: [
                     { title: regex },
-                    { description: regex },
                     { tags: regex },
-                    { code: regex },
-                    { dependencies: regex }
+                    { language: regex }
                 ]
             });
         }

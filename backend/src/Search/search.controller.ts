@@ -22,7 +22,8 @@ class SearchController {
             framework: req.query.framework as string,
             tag: req.query.tag as string,
             visibility: req.query.visibility as string,
-            isFavorite: req.query.isFavorite as string
+            isFavorite: req.query.isFavorite as string,
+            isDeleted: req.query.isDeleted as string
         };
 
         // At least a query or one filter is required

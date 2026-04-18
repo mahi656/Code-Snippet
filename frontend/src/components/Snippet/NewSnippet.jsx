@@ -344,11 +344,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
 
       {/* Header */}
       <div className="flex items-center justify-between px-8 h-[4.5rem] border-b border-gray-100 dark:border-[#27272a] shrink-0">
-        <div>
-          <h2 className="text-[22px] font-semibold tracking-tight text-gray-900 dark:text-[#f3f4f6]">
-            {isEditing ? 'Edit Snippet' : 'Create New Snippet'}
-          </h2>
-        </div>
+        <div />
         <div className="flex items-center gap-4">
           <button
             type="button"

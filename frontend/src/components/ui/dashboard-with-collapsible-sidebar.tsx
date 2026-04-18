@@ -48,16 +48,33 @@ export const Example = () => {
   const [editingSnippet, setEditingSnippet] = useState<any | null>(null);
   const [versionSnippetId, setVersionSnippetId] = useState<string | null>(null);
 
-  const fetchSnippets = async (tab = selected) => {
+  const fetchSnippets = async (tab = selected, query = searchQuery) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
     setIsLoading(true);
     try {
-      const endpoint = tab === "Trash" ? '/api/trash/' : '/api/snippets/';
-      const response = await api.get(endpoint);
-      if (response.data && response.data.data) {
-        setGlobalSnippets(response.data.data);
+      let response;
+      if (query.trim()) {
+        const filters: any = {};
+        if (tab === "Favorites") filters.isFavorite = "true";
+        if (tab === "Trash") filters.isDeleted = "true";
+        
+        const params = new URLSearchParams({ q: query, ...filters });
+        response = await api.get(`/api/search?${params.toString()}`);
+        if (response.data && response.data.data) {
+          setGlobalSnippets(response.data.data.results || []);
+        }
+      } else {
+        const endpoint = tab === "Trash" ? '/api/trash/' : '/api/snippets/';
+        response = await api.get(endpoint);
+        if (response.data && response.data.data) {
+          let snippets = response.data.data;
+          if (tab === "Favorites") {
+             snippets = snippets.filter((s: any) => s.isFavorite);
+          }
+          setGlobalSnippets(snippets);
+        }
       }
     } catch (err) {
       console.error("Fetch error:", err);
@@ -169,6 +186,17 @@ export const Example = () => {
       document.documentElement.classList.remove("dark");
     }
   }, [isDark]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (["All Snippets", "Favorites", "Trash"].includes(selected)) {
+        fetchSnippets(selected, searchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -706,19 +734,9 @@ const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }
 
 const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
   const safeSnippets = Array.isArray(snippets) ? snippets : [];
-  const filteredSnippets = safeSnippets.filter((s: any) => {
-    const title = s?.title || "";
-    const description = s?.description || "";
-    const language = s?.language || "";
-    
-    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      language.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (selected === "Favorites") return matchesSearch && s?.isFavorite;
-    if (selected === "Trash") return matchesSearch && s?.isDeleted;
-    return matchesSearch && !s?.isDeleted;
-  });
+  
+  // Backend now handles filtering, so we just use safeSnippets directly
+  const filteredSnippets = safeSnippets;
 
   return (
     <div className="flex-1 bg-white dark:bg-black flex flex-col h-full overflow-hidden">
