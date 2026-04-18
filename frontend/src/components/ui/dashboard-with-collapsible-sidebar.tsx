@@ -154,24 +154,24 @@ export const Example = () => {
     }
   };
 
-  const handleRestoreVersion = async (code: string) => {
+  const handleRestoreVersion = async (version: any) => {
     if (!versionSnippetId) return;
     try {
-      // First, get the current snippet data to keep other fields intact
-      const snippetToUpdate = globalSnippets.find(s => s._id === versionSnippetId);
-      if (!snippetToUpdate) return;
-
       const response = await api.put(`/api/snippets/${versionSnippetId}`, {
-        ...snippetToUpdate,
-        code,
-        changeNote: `Restored to a previous version`
+        title: version.title,
+        description: version.description,
+        language: version.language,
+        framework: version.framework,
+        tags: version.tags,
+        code: version.code,
+        changeNote: `Restored to version from ${format(new Date(version.createdAt), 'MMM dd, HH:mm')}`
       });
 
       if (response.data && response.data.success) {
-        setGlobalSnippets(prev => 
+        setGlobalSnippets(prev =>
           prev.map(s => s._id === versionSnippetId ? response.data.data.snippet : s)
         );
-        toast("Snippet restored to previous version", "success");
+        toast("Snippet fully restored to historical state", "success");
         setVersionSnippetId(null);
       }
     } catch (err) {

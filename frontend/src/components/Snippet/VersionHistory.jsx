@@ -45,10 +45,9 @@ const VersionHistory = ({ snippetId, isOpen, onClose, onRestore, isDark }) => {
 
   const handleRestore = async (version) => {
     try {
-      // Logic: Restore updates the current snippet's code with the version's code
-      // We pass the code back to the dashboard to refresh state
-      onRestore(version.code);
-      toast("Version restored successfully", "success");
+      // Logic: Restore updates the current snippet's code and metadata with the version's data
+      onRestore(version);
+      toast("Snippet fully restored", "success");
       onClose();
     } catch (err) {
       toast("Failed to restore version", "error");
@@ -142,9 +141,48 @@ const VersionHistory = ({ snippetId, isOpen, onClose, onRestore, isDark }) => {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             transition={{ duration: 0.2 }}
-                            className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800/50 space-y-4"
+                            className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800/50 space-y-5"
                           >
-                            <div className="h-72 rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 bg-[#1e1e1e]">
+                            {/* Snapshot Features */}
+                            <div className="space-y-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-[11px] font-semibold text-slate-600 dark:text-zinc-400">
+                                  <FileCode className="h-3 w-3" />
+                                  {version.language?.toUpperCase() || 'JAVASCRIPT'}
+                                </div>
+                                {version.framework && version.framework !== 'none' && (
+                                  <div className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-[11px] font-semibold text-slate-600 dark:text-zinc-400">
+                                    {version.framework.toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="space-y-1">
+                                <h4 className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">
+                                  {version.title}
+                                </h4>
+                                {version.description && (
+                                  <p className="text-[12px] text-slate-500 dark:text-zinc-400 italic leading-relaxed">
+                                    "{version.description}"
+                                  </p>
+                                )}
+                              </div>
+
+                              {version.tags && version.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {version.tags.map((tag, i) => (
+                                    <span key={i} className="text-[10px] font-medium text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-white/5 px-1.5 py-0.5 rounded border border-slate-100 dark:border-white/5">
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="h-72 rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 bg-[#1e1e1e] relative group/editor">
+                               <div className="absolute top-3 right-3 z-10 opacity-0 group-hover/editor:opacity-100 transition-opacity">
+                                  <span className="text-[10px] font-bold bg-black/50 backdrop-blur-md text-white/50 px-2 py-1 rounded">READ ONLY</span>
+                               </div>
                               <Editor
                                 height="100%"
                                 defaultLanguage="javascript"

@@ -83,6 +83,11 @@ class SnippetController {
         const initialVersion = new Version({
             snippetId: newSnippet._id,
             code: newSnippet.code,
+            title: newSnippet.title,
+            description: newSnippet.description,
+            language: newSnippet.language,
+            framework: newSnippet.framework,
+            tags: newSnippet.tags,
             changeNote: 'Initial Version',
             userId: userId
         });
@@ -135,10 +140,15 @@ class SnippetController {
         }
 
         // Feature: Automatically create a new version record for this update
-        // We save the latest code state as a new version
+        // We save the latest code state and full features as a new version
         const newVersion = new Version({
             snippetId: snippet._id,
             code: snippet.code,
+            title: snippet.title,
+            description: snippet.description,
+            language: snippet.language,
+            framework: snippet.framework,
+            tags: snippet.tags,
             changeNote: changeNote || 'Updated snippet details',
             userId: userId
         });

@@ -17,6 +17,11 @@ class VersionController {
         const newVersion = new Version({
             snippetId,
             code,
+            title: req.body.title || 'Untitled Snippet',
+            description: req.body.description || '',
+            language: req.body.language || 'javascript',
+            framework: req.body.framework || 'none',
+            tags: req.body.tags || [],
             changeNote,
             userId
         });
@@ -30,8 +35,25 @@ class VersionController {
         const { snippetId } = req.params;
         const userId = req.user?.id;
 
-        const versions = await Version.find({ snippetId, userId }).sort({ createdAt: -1 });
-        res.status(200).json(new ApiResponse(200, versions, 'Versions fetched successfully'));
+        // Fetch versions and populate the parent snippet to use for metadata fallbacks
+        const versions = await Version.find({ snippetId, userId }).populate('snippetId').sort({ createdAt: -1 });
+        
+        // Lazy Migration: If an old version is missing metadata, fill it from the current snippet state
+        const migratedVersions = versions.map(v => {
+            const versionObj = v.toObject();
+            const snippet = v.snippetId as any;
+            
+            if (snippet && !versionObj.title) {
+                versionObj.title = snippet.title;
+                versionObj.description = snippet.description;
+                versionObj.language = snippet.language;
+                versionObj.framework = snippet.framework;
+                versionObj.tags = snippet.tags;
+            }
+            return versionObj;
+        });
+
+        res.status(200).json(new ApiResponse(200, migratedVersions, 'Versions fetched successfully with metadata fallbacks'));
     });
 
     public getMyVersions = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
