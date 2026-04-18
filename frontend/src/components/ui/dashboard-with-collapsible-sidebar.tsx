@@ -30,6 +30,7 @@ import NewSnippet from "../Snippet/NewSnippet.jsx";
 import { ProfilePage } from "../../../Profile/Profile.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import SnippetCard from "../Snippet/SnippetCard.jsx";
+import VersionHistory from "../Snippet/VersionHistory.jsx";
 import api from "../../api/api";
 import { toast } from "./Notification.jsx";
 
@@ -44,6 +45,8 @@ export const Example = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingSnippet, setEditingSnippet] = useState<any | null>(null);
+  const [versionSnippetId, setVersionSnippetId] = useState<string | null>(null);
 
   const fetchSnippets = async (tab = selected) => {
     const token = localStorage.getItem('token');
@@ -134,6 +137,31 @@ export const Example = () => {
     }
   };
 
+  const handleRestoreVersion = async (code: string) => {
+    if (!versionSnippetId) return;
+    try {
+      // First, get the current snippet data to keep other fields intact
+      const snippetToUpdate = globalSnippets.find(s => s._id === versionSnippetId);
+      if (!snippetToUpdate) return;
+
+      const response = await api.put(`/api/snippets/${versionSnippetId}`, {
+        ...snippetToUpdate,
+        code,
+        changeNote: `Restored to a previous version`
+      });
+
+      if (response.data && response.data.success) {
+        setGlobalSnippets(prev => 
+          prev.map(s => s._id === versionSnippetId ? response.data.data.snippet : s)
+        );
+        toast("Snippet restored to previous version", "success");
+        setVersionSnippetId(null);
+      }
+    } catch (err) {
+      toast("Failed to restore version", "error");
+    }
+  };
+
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add("dark");
@@ -210,16 +238,33 @@ export const Example = () => {
             onDelete={handleDeleteSnippet}
             onRestore={handleRestoreSnippet}
             onEmptyTrash={handleEmptyTrash}
+            onEdit={(snippet: any) => {
+              setEditingSnippet(snippet);
+              setSelected("Edit Snippet");
+            }}
+            onHistory={(id: string) => {
+              setVersionSnippetId(id);
+            }}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />
         ) : (
           <div className="flex-1 overflow-hidden h-screen bg-white dark:bg-[#09090b]">
             <NewSnippet
-              onCancel={() => setSelected("All Snippets")}
+              onCancel={() => {
+                setEditingSnippet(null);
+                setSelected("All Snippets");
+              }}
               existingSnippets={globalSnippets}
-              onSave={(newSnippet: any) => {
-                setGlobalSnippets(prev => [newSnippet, ...prev]);
+              isEditing={!!editingSnippet}
+              snippet={editingSnippet}
+              onSave={(savedSnippet: any) => {
+                if (editingSnippet) {
+                  setGlobalSnippets(prev => prev.map(s => s._id === savedSnippet._id ? savedSnippet : s));
+                } else {
+                  setGlobalSnippets(prev => [savedSnippet, ...prev]);
+                }
+                setEditingSnippet(null);
                 setSelected("All Snippets");
               }}
             />
@@ -264,6 +309,14 @@ export const Example = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <VersionHistory 
+        snippetId={versionSnippetId}
+        isOpen={!!versionSnippetId}
+        onClose={() => setVersionSnippetId(null)}
+        onRestore={handleRestoreVersion}
+        isDark={isDark}
+      />
     </div>
   );
 };
@@ -651,7 +704,7 @@ const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
+const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
   const safeSnippets = Array.isArray(snippets) ? snippets : [];
   const filteredSnippets = safeSnippets.filter((s: any) => {
     const title = s?.title || "";
@@ -711,6 +764,8 @@ const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen, snippets =
                 isDark={isDark}
                 onFavorite={onFavorite}
                 onDelete={onDelete}
+                onEdit={onEdit}
+                onHistory={onHistory}
                 onRestore={onRestore}
                 view={selected}
               />

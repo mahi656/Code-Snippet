@@ -5,26 +5,15 @@ import {
   Code,
   Calendar,
   Tag,
-  ExternalLink,
-  Copy,
-  Check,
-  RotateCcw
+  RotateCcw,
+  Edit3,
+  History
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from '../ui/Notification.jsx';
 import { motion } from 'framer-motion';
 
-const SnippetCard = ({ snippet, onFavorite, onDelete, onRestore, isDark, view }) => {
-  const [copied, setCopied] = React.useState(false);
-
-  const handleCopy = (e) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(snippet.code);
-    setCopied(true);
-    toast('Code copied to clipboard!', 'success');
-    setTimeout(() => setCopied(false), 2000);
-  };
-
+const SnippetCard = ({ snippet, onFavorite, onDelete, onEdit, onHistory, onRestore, isDark, view }) => {
   const formattedDate = format(new Date(snippet.createdAt), 'MMM dd, yyyy');
 
   return (
@@ -50,11 +39,11 @@ const SnippetCard = ({ snippet, onFavorite, onDelete, onRestore, isDark, view })
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+        <div className="flex items-center gap-1.5 transition-all duration-300">
           {view !== "Trash" && (
             <button
               onClick={(e) => { e.stopPropagation(); onFavorite(snippet._id, !snippet.isFavorite); }}
-              className={`p-2.5 rounded-xl transition-all duration-200 ${snippet.isFavorite ? 'text-rose-500 bg-rose-50/50 dark:bg-rose-900/10' : 'text-gray-400 hover:text-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10'}`}
+              className={`p-2.5 rounded-xl transition-all duration-200 ${snippet.isFavorite ? 'text-rose-500 bg-rose-50/50 dark:bg-rose-900/10' : 'text-gray-400 dark:text-gray-500 hover:text-rose-500 bg-gray-50/50 dark:bg-[#111113] border border-gray-100 dark:border-[#27272a] hover:bg-rose-50/50 dark:hover:bg-rose-900/10'}`}
               title="Favorite"
             >
               <Heart className={`h-4.5 w-4.5 ${snippet.isFavorite ? 'fill-current' : ''}`} />
@@ -64,23 +53,35 @@ const SnippetCard = ({ snippet, onFavorite, onDelete, onRestore, isDark, view })
           {view === "Trash" && (
             <button
               onClick={(e) => { e.stopPropagation(); onRestore && onRestore(snippet._id); }}
-              className="p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
+              className="p-2.5 rounded-xl text-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 transition-all duration-200"
               title="Restore Snippet"
             >
               <RotateCcw className="h-4.5 w-4.5" />
             </button>
           )}
 
-          <button
-            onClick={handleCopy}
-            className="p-2.5 rounded-xl text-gray-400 hover:text-violet-500 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 transition-all duration-200"
-            title="Copy Code"
-          >
-            {copied ? <Check className="h-4.5 w-4.5 text-green-500" /> : <Copy className="h-4.5 w-4.5" />}
-          </button>
+          {view !== "Trash" && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit && onEdit(snippet); }}
+                className="p-2.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-500 bg-gray-50/50 dark:bg-[#111113] border border-gray-100 dark:border-[#27272a] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200"
+                title="Edit Snippet"
+              >
+                <Edit3 className="h-4.5 w-4.5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onHistory && onHistory(snippet._id); }}
+                className="p-2.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-amber-500 bg-gray-50/50 dark:bg-[#111113] border border-gray-100 dark:border-[#27272a] hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-all duration-200"
+                title="Version History"
+              >
+                <History className="h-4.5 w-4.5" />
+              </button>
+            </>
+          )}
+
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(snippet._id); }}
-            className="p-2.5 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-all duration-200"
+            className="p-2.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-red-500 bg-gray-50/50 dark:bg-[#111113] border border-gray-100 dark:border-[#27272a] hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-all duration-200"
             title={view === "Trash" ? "Permanently Delete" : "Move to Trash"}
           >
             <Trash2 className="h-4.5 w-4.5" />

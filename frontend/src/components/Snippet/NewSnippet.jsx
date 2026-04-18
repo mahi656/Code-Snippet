@@ -170,7 +170,7 @@ const CustomDatePicker = ({ selectedDate, onChange }) => {
   );
 };
 
-export default function NewSnippet({ onSave, onCancel, existingSnippets = [], isEditing = false }) {
+export default function NewSnippet({ onSave, onCancel, existingSnippets = [], isEditing = false, snippet = null }) {
   //This part stores all the "live" data for our form
 
   // These three variables keep track of whether our dropdown menus are open or closed
@@ -200,6 +200,27 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
     calendarDate: '',
     attachments: []
   });
+
+  // Pre-fill form if editing
+  React.useEffect(() => {
+    if (isEditing && snippet) {
+      setFormData({
+        title: snippet.title || '',
+        description: snippet.description || '',
+        language: snippet.language || 'javascript',
+        framework: snippet.framework || 'none',
+        visibility: snippet.visibility || 'private',
+        dependencies: snippet.dependencies || '',
+        code: snippet.code || '',
+        tags: Array.isArray(snippet.tags) ? snippet.tags.join(', ') : (snippet.tags || ''),
+        isFavorite: !!snippet.isFavorite,
+        changeNote: '',
+        showInCalendar: !!snippet.showInCalendar,
+        calendarDate: snippet.calendarDate || '',
+        attachments: snippet.attachments || []
+      });
+    }
+  }, [isEditing, snippet]);
 
   // This function updates our formData whenever a user types in a normal text box
   const handleChange = (e) => {
@@ -252,7 +273,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
 
       // Duplicate Title Check
       const isDuplicateTitle = snippets.some(
-        (s) => s.title?.toLowerCase() === title.toLowerCase()
+        (s) => s.title?.toLowerCase() === title.toLowerCase() && s._id !== snippet?._id
       );
 
       if (isDuplicateTitle) {
@@ -286,10 +307,21 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
           : [],
       };
 
-      const response = await api.post('/api/snippets/', payload);
+      let response;
+      if (isEditing && snippet) {
+        // If editing, we also need a change note
+        if (!formData.changeNote?.trim()) {
+           toast("Please provide a change note for this version", "error");
+           setIsSaving(false);
+           return;
+        }
+        response = await api.put(`/api/snippets/${snippet._id}`, payload);
+      } else {
+        response = await api.post('/api/snippets/', payload);
+      }
 
       if (response.data && response.data.success) {
-        toast('Snippet saved successfully!', 'success');
+        toast(isEditing ? 'Snippet updated successfully!' : 'Snippet saved successfully!', 'success');
         if (onSave) {
           // Pass the snippet from response.data.data.snippet
           onSave(response.data.data.snippet);
@@ -314,7 +346,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
       <div className="flex items-center justify-between px-8 h-[4.5rem] border-b border-gray-100 dark:border-[#27272a] shrink-0">
         <div>
           <h2 className="text-[22px] font-semibold tracking-tight text-gray-900 dark:text-[#f3f4f6]">
-            Create New Snippet
+            {isEditing ? 'Edit Snippet' : 'Create New Snippet'}
           </h2>
         </div>
         <div className="flex items-center gap-4">
