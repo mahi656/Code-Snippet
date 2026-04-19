@@ -180,3 +180,135 @@ body {
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+/* ═══════════════════════════════════════════════
+   Snippet Card — reference design tokens
+   Light mode
+═══════════════════════════════════════════════ */
+:root {
+  /* single unified card surface */
+  --sc-bg: #ffffff;
+  --sc-border: #e5e5e8;
+  --sc-divider: #e5e5e8;
+  --sc-body-bg: #ffffff;
+  --sc-strip-bg: #ffffff;
+  --sc-label: #111111;
+  --sc-title: #0d0d0d;
+  --sc-meta: #9ca3af;
+  --sc-badge-bg: #ede9fe;
+  --sc-badge-icon: #7c3aed;
+  --sc-tag-bg: #f3f4f6;
+  --sc-tag-text: #374151;
+  --sc-tag-border: #e5e7eb;
+  --sc-cta-bg: #111111;
+  --sc-cta-text: #ffffff;
+  --sc-icon-color: #9ca3af;
+  --sc-icon-hover: #111111;
+}
+
+/* Dark mode overrides */
+.dark {
+  /* single unified dark surface */
+  --sc-bg: #111113;
+  --sc-border: #27272a;
+  --sc-divider: #27272a;
+  --sc-body-bg: #111113;
+  --sc-strip-bg: #111113;
+  --sc-label: #e4e4e7;
+  --sc-title: #fafafa;
+  --sc-meta: #52525b;
+  --sc-badge-bg: #1e1730;
+  --sc-badge-icon: #a78bfa;
+  --sc-tag-bg: #1c1c1f;
+  --sc-tag-text: #a1a1aa;
+  --sc-tag-border: #27272a;
+  --sc-cta-bg: #fafafa;
+  --sc-cta-text: #111111;
+  --sc-icon-color: #52525b;
+  --sc-icon-hover: #e4e4e7;
+}
+
+/* Card hover lift */
+.sc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.12) !important;
+  border-color: #c4b5fd !important;
+}
+
+.dark .sc-card:hover {
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.5) !important;
+  border-color: #7c3aed80 !important;
+}
+
+/* Icon action buttons */
+.sc-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--sc-icon-color);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  flex-shrink: 0;
+}
+
+.sc-icon-btn:hover {
+  background: var(--sc-tag-bg);
+  color: var(--sc-icon-hover);
+}
+
+.sc-icon-btn--red:hover {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.10) !important;
+}
+
+.sc-icon-btn--green:hover {
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.10) !important;
+}
+
+.sc-icon-btn--blue:hover {
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.10) !important;
+}
+
+.sc-icon-btn--amber:hover {
+  color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.10) !important;
+}
+
+.sc-icon-btn--rose:hover {
+  color: #f43f5e !important;
+  background: rgba(244, 63, 94, 0.10) !important;
+}
+
+/* Primary CTA button */
+.sc-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: filter 0.18s, transform 0.18s;
+}
+
+.sc-cta-btn:hover {
+  filter: brightness(0.92);
+  transform: scale(1.04);
+}
+
+.sc-cta-btn:active {
+  transform: scale(0.96);
+}

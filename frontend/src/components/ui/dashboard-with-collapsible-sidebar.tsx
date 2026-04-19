@@ -45,7 +45,7 @@ export const Example = () => {
 
   // Real project implementation: Store our created snippets globally!
   const [globalSnippets, setGlobalSnippets] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingSnippet, setEditingSnippet] = useState<any | null>(null);
@@ -82,7 +82,7 @@ export const Example = () => {
     if (shouldClear) {
       setGlobalSnippets([]);
       setSearchQuery("");
-      setIsAddingSnippet(false);
+      setIsLoading(true);
       setEditingSnippet(null);
     }
 
@@ -589,15 +589,15 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
         <div className="px-5 py-4">
           <button
             onClick={() => handleNavigate("New Snippet")}
-            className="w-full flex items-center justify-center gap-2.5 bg-zinc-900 dark:bg-white text-white dark:text-black text-[14px] font-black py-2.5 rounded-xl shadow-[0_4px_20px_-4px_rgba(245,158,11,0.2)] dark:shadow-[0_4px_20px_-4px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98] border border-white/5"
+            className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-[14px] font-semibold py-2.5 rounded-xl shadow-md transition-all hover:-translate-y-[1px] active:scale-[0.98] border border-gray-800/10 dark:border-white/10"
           >
-            <Plus className="h-4.5 w-4.5 stroke-[3]" />
+            <Plus className="h-4 w-4 stroke-[2.5]" />
             New Snippet
           </button>
         </div>
 
         <div className="px-5 pb-2">
-          <h2 className="text-[11px] font-bold tracking-[0.12em] text-gray-500 uppercase px-2 mb-1">Navigation</h2>
+          <h2 className="text-[12px] font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase px-2 mb-1">Navigation</h2>
         </div>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-1.5 scrollbar-hide">
@@ -800,32 +800,31 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
         </div>
 
         <div className="p-4 mt-auto border-t border-gray-200 dark:border-neutral-800/60">
-          <div className="flex items-center gap-4 px-2 w-full">
+          <div className="flex items-center gap-2 w-full">
             <button
               onClick={() => setIsDark(!isDark)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition-colors text-gray-700 dark:text-gray-400"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800/50 transition-colors text-gray-600 dark:text-gray-400"
             >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {isDark ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
             </button>
 
             <div
               onClick={() => handleNavigate("Profile")}
-              className="flex items-center justify-between w-full p-1.5 bg-gray-100/50 hover:bg-gray-200/80 dark:bg-[#1a1c1e] dark:hover:bg-[#272a2d] border border-transparent rounded-full cursor-pointer transition-colors"
+              className="flex flex-1 items-center justify-between p-2 border border-gray-200 dark:border-neutral-800 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0d3b44] text-[#7de5ed] font-bold text-[15px] shadow-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-semibold text-[14px] shadow-sm">
                   {userInitial}
                 </div>
-                <div className="flex flex-col items-start -mt-0.5">
-                  <span className="text-[14px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">
+                <div className="flex flex-col justify-center gap-0.5">
+                  <span className="text-[14px] font-semibold text-gray-900 dark:text-gray-100 tracking-tight leading-none">
                     {username}
                   </span>
-                  <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-tight">
+                  <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-none">
                     My Profile
                   </span>
                 </div>
               </div>
-              <MoreVertical className="h-[18px] w-[18px] text-gray-400 mr-2 shrink-0" />
             </div>
           </div>
         </div>
@@ -845,7 +844,7 @@ const Option = ({ Icon, title, isSelected, onClick }: any) => {
     >
       <div className="flex items-center gap-3.5">
         <Icon className={`h-5 w-5 ${isSelected ? "text-gray-900 dark:text-white stroke-[2.5]" : "text-gray-500 dark:text-[#8b919d] stroke-2"}`} />
-        <span className="text-[15px] pt-[1px]">{title}</span>
+        <span className="text-[14px] font-medium tracking-tight mt-[1px]">{title}</span>
       </div>
     </button>
   );
@@ -862,7 +861,7 @@ const CollapsibleGroup = ({ title, Icon, children, defaultExpanded = false }: an
       >
         <div className="flex items-center gap-3.5">
           <Icon className="h-5 w-5 text-gray-500 dark:text-[#8b919d]" />
-          <span className="text-[15px] pt-[1px]">{title}</span>
+          <span className="text-[14px] font-medium tracking-tight mt-[1px]">{title}</span>
         </div>
         <div>
           {expanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
@@ -994,7 +993,16 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLang
 
       {/* Content Area */}
       <div className="flex-1 overflow-auto p-8 scrollbar-hide relative min-h-[500px]">
-        {filteredSnippets.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+            <div className="w-16 h-16 rounded-full bg-gray-200/50 dark:bg-[#27272a]/50 flex items-center justify-center mb-4">
+              <div className="w-8 h-8 border-4 border-gray-300/30 dark:border-gray-600/30 border-t-[#a78bfa] rounded-full animate-spin" />
+            </div>
+            <p className="text-gray-500 dark:text-[#a1a1aa] text-[15px] font-medium animate-pulse">
+              Loading snippets...
+            </p>
+          </div>
+        ) : filteredSnippets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500 fill-mode-both">
             {filteredSnippets.map((snippet: any) => (
               <SnippetCard
@@ -1010,7 +1018,7 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLang
               />
             ))}
           </div>
-        ) : !isLoading && (
+        ) : (
           <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50/50 dark:bg-[#09090b]/50 p-8 shadow-sm flex flex-col items-center justify-center h-full min-h-[400px]">
             <div className="w-16 h-16 rounded-full bg-gray-200/50 dark:bg-[#27272a]/50 flex items-center justify-center mb-4">
               <FilePlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
