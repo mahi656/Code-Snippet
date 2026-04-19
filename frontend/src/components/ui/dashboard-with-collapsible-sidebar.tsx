@@ -49,8 +49,10 @@ export const Example = () => {
   const [versionSnippetId, setVersionSnippetId] = useState<string | null>(null);
   const [tags, setTags] = useState<any[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [languages, setLanguages] = useState<any[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
 
-  const fetchSnippets = async (tab = selected, query = searchQuery, tag = selectedTag) => {
+  const fetchSnippets = async (tab = selected, query = searchQuery, tag = selectedTag, lang = selectedLanguage) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
@@ -62,7 +64,8 @@ export const Example = () => {
         if (tab === "Favorites") filters.isFavorite = "true";
         if (tab === "Trash") filters.isDeleted = "true";
         if (tab === "Tag" && tag) filters.tag = tag;
-        
+        if (tab === "Language" && lang) filters.language = lang;
+
         const params = new URLSearchParams({ q: query, ...filters });
         response = await api.get(`/api/search?${params.toString()}`);
         if (response.data && response.data.data) {
@@ -74,15 +77,17 @@ export const Example = () => {
           endpoint = '/api/trash/';
         } else if (tab === "Tag" && tag) {
           endpoint = `/api/tags/${tag.toLowerCase()}/snippets`;
+        } else if (tab === "Language" && lang) {
+          endpoint = `/api/languages/${lang.toLowerCase()}/snippets`;
         } else {
           endpoint = '/api/snippets/';
         }
-        
+
         response = await api.get(endpoint);
         if (response.data && response.data.data) {
           let snippets = response.data.data;
           if (tab === "Favorites") {
-             snippets = snippets.filter((s: any) => s.isFavorite);
+            snippets = snippets.filter((s: any) => s.isFavorite);
           }
           setGlobalSnippets(snippets);
         }
@@ -108,12 +113,24 @@ export const Example = () => {
     }
   };
 
+  const fetchLanguages = async () => {
+    try {
+      const response = await api.get('/api/languages');
+      if (response.data && response.data.data) {
+        setLanguages(response.data.data);
+      }
+    } catch (err) {
+      console.error("Fetch languages error:", err);
+    }
+  };
+
   useEffect(() => {
-    if (["All Snippets", "Favorites", "Trash", "Tag"].includes(selected)) {
-      fetchSnippets(selected, searchQuery, selectedTag);
+    if (["All Snippets", "Favorites", "Trash", "Tag", "Language"].includes(selected)) {
+      fetchSnippets(selected, searchQuery, selectedTag, selectedLanguage);
     }
     fetchTags();
-  }, [selected, selectedTag]);
+    fetchLanguages();
+  }, [selected, selectedTag, selectedLanguage]);
 
   // Removed redundant useEffect. Fetching is now handled by the Auth Guard below.
 
@@ -213,8 +230,8 @@ export const Example = () => {
   // Debounced search effect
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (["All Snippets", "Favorites", "Trash", "Tag"].includes(selected)) {
-        fetchSnippets(selected, searchQuery, selectedTag);
+      if (["All Snippets", "Favorites", "Trash", "Tag", "Language"].includes(selected)) {
+        fetchSnippets(selected, searchQuery, selectedTag, selectedLanguage);
       }
     }, 300);
 
@@ -261,6 +278,9 @@ export const Example = () => {
           tags={tags}
           selectedTag={selectedTag}
           setSelectedTag={setSelectedTag}
+          languages={languages}
+          selectedLanguage={selectedLanguage}
+          setSelectedLanguage={setSelectedLanguage}
         />
         {/* Toggle Button when Sidebar is Hidden */}
         {!isSidebarOpen && (
@@ -280,12 +300,13 @@ export const Example = () => {
           <div className="flex-1 overflow-hidden h-screen flex flex-col bg-white dark:bg-black">
             <ProfilePage onBack={() => setSelected("All Snippets")} isDark={isDark} />
           </div>
-        ) : ["All Snippets", "Favorites", "Trash", "Tag"].includes(selected) ? (
+        ) : ["All Snippets", "Favorites", "Trash", "Tag", "Language"].includes(selected) ? (
           <ExampleContent
             isDark={isDark}
             setIsDark={setIsDark}
             selected={selected}
             selectedTag={selectedTag}
+            selectedLanguage={selectedLanguage}
             isSidebarOpen={isSidebarOpen}
             snippets={globalSnippets}
             isLoading={isLoading}
@@ -365,7 +386,7 @@ export const Example = () => {
         )}
       </AnimatePresence>
 
-      <VersionHistory 
+      <VersionHistory
         snippetId={versionSnippetId}
         isOpen={!!versionSnippetId}
         onClose={() => setVersionSnippetId(null)}
@@ -378,7 +399,7 @@ export const Example = () => {
 
 const getTagColor = (name: string) => {
   const colors = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
     '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
   ];
   let hash = 0;
@@ -388,7 +409,7 @@ const getTagColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag }: any) => {
+const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag, languages, selectedLanguage, setSelectedLanguage }: any) => {
   const username = localStorage.getItem('username') || "User";
   const userInitial = username.charAt(0).toUpperCase();
 
@@ -621,23 +642,21 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                         setSelectedTag(tag.name);
                         setSelected("Tag");
                       }}
-                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-200 px-3 ${
-                        selected === "Tag" && selectedTag === tag.name
+                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-200 px-3 ${selected === "Tag" && selectedTag === tag.name
                           ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
                           : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3 w-full">
-                        <div 
-                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]" 
-                          style={{ backgroundColor: getTagColor(tag.name) }} 
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
+                          style={{ backgroundColor: getTagColor(tag.name) }}
                         />
                         <span className="text-[14px] truncate flex-1 text-left">{tag.name}</span>
-                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${
-                          selected === "Tag" && selectedTag === tag.name
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${selected === "Tag" && selectedTag === tag.name
                             ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
                             : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
-                        }`}>
+                          }`}>
                           {tag.snippetCount}
                         </span>
                       </div>
@@ -649,8 +668,40 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
               </div>
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Languages" Icon={CodeXml}>
-              <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No languages defined yet</div>
+            <CollapsibleGroup title="Languages" Icon={CodeXml} defaultExpanded>
+              <div className="mt-1 flex flex-col space-y-0.5">
+                {languages.length > 0 ? (
+                  languages.map((lang: any) => (
+                    <button
+                      key={lang.name}
+                      onClick={() => {
+                        setSelectedLanguage(lang.name);
+                        setSelected("Language");
+                      }}
+                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-200 px-3 ${selected === "Language" && selectedLanguage === lang.name
+                          ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                          : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
+                          style={{ backgroundColor: getTagColor(lang.name) }}
+                        />
+                        <span className="text-[14px] truncate flex-1 text-left capitalize">{lang.name}</span>
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${selected === "Language" && selectedLanguage === lang.name
+                            ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
+                            : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
+                          }`}>
+                          {lang.snippetCount}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No languages defined yet</div>
+                )}
+              </div>
             </CollapsibleGroup>
           </div>
           <div className="pb-4" />
@@ -805,9 +856,9 @@ const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
+const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLanguage, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
   const safeSnippets = Array.isArray(snippets) ? snippets : [];
-  
+
   // Backend now handles filtering, so we just use safeSnippets directly
   const filteredSnippets = safeSnippets;
 
@@ -821,6 +872,11 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, isSidebarOpe
               <div className="flex items-center gap-3">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getTagColor(selectedTag || "") }} />
                 <span>{selectedTag}</span>
+              </div>
+            ) : selected === "Language" ? (
+              <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getTagColor(selectedLanguage || "") }} />
+                <span>{selectedLanguage}</span>
               </div>
             ) : selected}
           </h1>
