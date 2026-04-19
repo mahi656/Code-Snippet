@@ -35,8 +35,7 @@ import api from "../../api/api";
 import { toast } from "./Notification.jsx";
 import { getTagColor } from "../../utils/tag-lang-colors";
 import { formatFullDate } from "../../utils/dateUtils";
-import TagList from "../Tag/TagList.jsx";
-import LanguageList from "../Language/LanguageList.jsx";
+import { capitalize } from "../../utils/stringUtils";
 
 export const Example = () => {
   console.log("Dashboard (Example) Rendering...");
@@ -55,6 +54,48 @@ export const Example = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [languages, setLanguages] = useState<any[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Unified Navigation Handler
+  const handleNavigate = (view: string, subValue: string | null = null) => {
+    if (view === "All Snippets") navigate("/dashboard");
+    else if (view === "Favorites") navigate("/dashboard/favorites");
+    else if (view === "Trash") navigate("/dashboard/trash");
+    else if (view === "Calendar") navigate("/dashboard/calendar");
+    else if (view === "Profile") navigate("/dashboard/profile");
+    else if (view === "New Snippet") navigate("/dashboard/new");
+    else if (view === "Tag" && subValue) navigate(`/dashboard/tags/${subValue.toLowerCase()}`);
+    else if (view === "Language" && subValue) navigate(`/dashboard/languages/${subValue.toLowerCase()}`);
+  };
+
+  // Sync state with URL
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === "/dashboard" || path === "/dashboard/") {
+      setSelected("All Snippets");
+      setSelectedTag(null);
+      setSelectedLanguage(null);
+    } else if (path.startsWith("/dashboard/favorites")) {
+      setSelected("Favorites");
+    } else if (path.startsWith("/dashboard/trash")) {
+      setSelected("Trash");
+    } else if (path.startsWith("/dashboard/calendar")) {
+      setSelected("Calendar");
+    } else if (path.startsWith("/dashboard/profile")) {
+      setSelected("Profile");
+    } else if (path.startsWith("/dashboard/new")) {
+      setSelected("New Snippet");
+    } else if (path.startsWith("/dashboard/tags/")) {
+      const tag = path.split("/").pop();
+      setSelected("Tag");
+      setSelectedTag(tag || null);
+    } else if (path.startsWith("/dashboard/languages/")) {
+      const lang = path.split("/").pop();
+      setSelected("Language");
+      setSelectedLanguage(lang || null);
+    }
+  }, [location.pathname]);
 
   const fetchSnippets = async (tab = selected, query = searchQuery, tag = selectedTag, lang = selectedLanguage) => {
     const token = localStorage.getItem('token');
@@ -285,6 +326,7 @@ export const Example = () => {
           languages={languages}
           selectedLanguage={selectedLanguage}
           setSelectedLanguage={setSelectedLanguage}
+          handleNavigate={handleNavigate}
         />
         {/* Toggle Button when Sidebar is Hidden */}
         {!isSidebarOpen && (
@@ -320,7 +362,7 @@ export const Example = () => {
             onEmptyTrash={handleEmptyTrash}
             onEdit={(snippet: any) => {
               setEditingSnippet(snippet);
-              setSelected("Edit Snippet");
+              navigate(`/dashboard/edit/${snippet._id}`);
             }}
             onHistory={(id: string) => {
               setVersionSnippetId(id);
@@ -333,7 +375,7 @@ export const Example = () => {
             <NewSnippet
               onCancel={() => {
                 setEditingSnippet(null);
-                setSelected("All Snippets");
+                handleNavigate("All Snippets");
               }}
               existingSnippets={globalSnippets}
               isEditing={!!editingSnippet}
@@ -345,7 +387,7 @@ export const Example = () => {
                   setGlobalSnippets(prev => [savedSnippet, ...prev]);
                 }
                 setEditingSnippet(null);
-                setSelected("All Snippets");
+                handleNavigate("All Snippets");
               }}
             />
           </div>
@@ -401,7 +443,7 @@ export const Example = () => {
   );
 };
 
-const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag, languages, selectedLanguage, setSelectedLanguage }: any) => {
+const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag, languages, selectedLanguage, setSelectedLanguage, handleNavigate }: any) => {
   const username = localStorage.getItem('username') || "User";
   const userInitial = username.charAt(0).toUpperCase();
 
@@ -461,14 +503,21 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center shrink-0">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full text-gray-900 dark:text-white">
-                <rect x="4" y="4" width="14" height="14" rx="4" fill="currentColor" fillOpacity="1" />
-                <rect x="22" y="22" width="14" height="14" rx="4" fill="currentColor" fillOpacity="1" />
-                <rect x="4" y="22" width="14" height="14" rx="4" fill="currentColor" fillOpacity="0.25" />
-                <rect x="22" y="4" width="14" height="14" rx="4" fill="currentColor" fillOpacity="0.25" />
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full">
+                <path d="M4 12C4 7.58172 7.58172 4 12 4H28C32.4183 4 36 7.58172 36 12V28C36 32.4183 32.4183 36 28 36H12C7.58172 36 4 32.4183 4 28V12Z" fill="url(#brand-grad)" fillOpacity="0.15" />
+                <rect x="8" y="8" width="10" height="10" rx="3" fill="url(#brand-grad)" />
+                <rect x="22" y="22" width="10" height="10" rx="3" fill="url(#brand-grad)" />
+                <defs>
+                  <linearGradient id="brand-grad" x1="8" y1="8" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#f59e0b" />
+                    <stop offset="1" stopColor="#f97316" />
+                  </linearGradient>
+                </defs>
               </svg>
             </div>
-            <span className="text-[17px] font-medium text-gray-900 dark:text-white mt-0.5 tracking-tight">CodeSnippet</span>
+            <span className="text-[19px] font-black tracking-[-0.02em] bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-gray-300 to-gray-500 drop-shadow-sm">
+              CodeSnippet
+            </span>
           </div>
 
           <button
@@ -482,10 +531,10 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
 
         <div className="px-5 py-4">
           <button
-            onClick={() => setSelected("New Snippet")}
-            className="w-full flex items-center justify-center gap-2 bg-[#e5e5e5] hover:bg-white text-black text-[14px] font-medium py-2.5 rounded-xl shadow-sm transition-colors active:scale-[0.98]"
+            onClick={() => handleNavigate("New Snippet")}
+            className="w-full flex items-center justify-center gap-2.5 bg-zinc-900 dark:bg-white text-white dark:text-black text-[14px] font-black py-2.5 rounded-xl shadow-[0_4px_20px_-4px_rgba(245,158,11,0.2)] dark:shadow-[0_4px_20px_-4px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98] border border-white/5"
           >
-            <Plus className="h-4 w-4 stroke-2" />
+            <Plus className="h-4.5 w-4.5 stroke-[3]" />
             New Snippet
           </button>
         </div>
@@ -498,26 +547,26 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
           <Option
             Icon={FileText}
             title="All Snippets"
-            selected={selected}
-            setSelected={setSelected}
+            isSelected={selected === "All Snippets"}
+            onClick={() => handleNavigate("All Snippets")}
           />
           <Option
             Icon={Heart}
             title="Favorites"
-            selected={selected}
-            setSelected={setSelected}
+            isSelected={selected === "Favorites"}
+            onClick={() => handleNavigate("Favorites")}
           />
           <Option
             Icon={Calendar}
             title="Calendar"
-            selected={selected}
-            setSelected={setSelected}
+            isSelected={selected === "Calendar"}
+            onClick={() => handleNavigate("Calendar")}
           />
           <Option
             Icon={Trash2}
             title="Trash"
-            selected={selected}
-            setSelected={setSelected}
+            isSelected={selected === "Trash"}
+            onClick={() => handleNavigate("Trash")}
           />
 
           <div className="my-6 border-b border-gray-200 dark:border-neutral-800/40 w-[85%] mx-auto" />
@@ -550,8 +599,8 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                         <ProjectFile
                           key={item.id}
                           title={item.name}
-                          selected={selected}
-                          setSelected={setSelected}
+                          isSelected={selected === "ProjectFile" && selectedTag === item.name} // Assuming ProjectFile logic similar to tags for now
+                          onClick={() => handleNavigate("ProjectFile", item.name)} 
                           onDelete={() => handleDeleteItem(proj.id, item.id)}
                         />
                       )
@@ -625,23 +674,69 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
             </CollapsibleGroup>
 
             <CollapsibleGroup title="Tags" Icon={Tag} defaultExpanded>
-              <TagList
-                tags={tags}
-                selected={selected}
-                selectedTag={selectedTag}
-                setSelectedTag={setSelectedTag}
-                setSelected={setSelected}
-              />
+              <div className="mt-1 flex flex-col space-y-0.5">
+                {tags.length > 0 ? (
+                  tags.map((tag) => (
+                    <button
+                      key={tag.name}
+                      onClick={() => handleNavigate("Tag", tag.name)}
+                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 ${selected === "Tag" && selectedTag === tag.name
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-bold shadow-[inset_0_1px_rgba(245,158,11,0.05)]"
+                        : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-500 font-medium"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
+                          style={{ backgroundColor: getTagColor(tag.name) }}
+                        />
+                        <span className="text-[14px] truncate flex-1 text-left">{tag.name}</span>
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${selected === "Tag" && selectedTag === tag.name
+                          ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
+                          : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
+                          }`}>
+                          {tag.snippetCount}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No tags defined yet</div>
+                )}
+              </div>
             </CollapsibleGroup>
 
             <CollapsibleGroup title="Languages" Icon={CodeXml} defaultExpanded>
-              <LanguageList
-                languages={languages}
-                selected={selected}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
-                setSelected={setSelected}
-              />
+              <div className="mt-1 flex flex-col space-y-0.5">
+                {languages.length > 0 ? (
+                  languages.map((lang) => (
+                    <button
+                      key={lang.name}
+                      onClick={() => handleNavigate("Language", lang.name)}
+                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 ${selected === "Language" && selectedLanguage === lang.name
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-bold shadow-[inset_0_1px_rgba(245,158,11,0.05)]"
+                        : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-500 font-medium"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
+                          style={{ backgroundColor: getTagColor(lang.name) }}
+                        />
+                        <span className="text-[14px] truncate flex-1 text-left">{capitalize(lang.name)}</span>
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${selected === "Language" && selectedLanguage === lang.name
+                          ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
+                          : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
+                          }`}>
+                          {lang.snippetCount}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No languages defined yet</div>
+                )}
+              </div>
             </CollapsibleGroup>
           </div>
           <div className="pb-4" />
@@ -657,23 +752,23 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
             </button>
 
             <div
-              onClick={() => setSelected("Profile")}
+              onClick={() => handleNavigate("Profile")}
               className="flex items-center justify-between w-full p-1.5 bg-gray-100/50 hover:bg-gray-200/80 dark:bg-[#1a1c1e] dark:hover:bg-[#272a2d] border border-transparent rounded-full cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0d3b44] text-[#7de5ed] font-bold text-[15px] shadow-sm">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-200 via-gray-400 to-gray-600 text-black font-black text-[16px] shadow-sm">
                   {userInitial}
                 </div>
                 <div className="flex flex-col items-start -mt-0.5">
-                  <span className="text-[14px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">
+                  <span className="text-[14px] font-black text-gray-900 dark:text-white tracking-tight leading-tight">
                     {username}
                   </span>
-                  <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-tight">
+                  <span className="text-[10px] font-black text-gray-400 dark:text-[#4b4b4f] uppercase tracking-[0.15em] leading-tight">
                     My Profile
                   </span>
                 </div>
               </div>
-              <MoreVertical className="h-[18px] w-[18px] text-gray-400 mr-2 shrink-0" />
+              <MoreVertical className="h-[18px] w-[18px] text-gray-400 mr-2 shrink-0 hover:text-amber-500 transition-colors" />
             </div>
           </div>
         </div>
@@ -682,21 +777,22 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected }: any) => {
-  const isSelected = selected === title;
-
+const Option = ({ Icon, title, isSelected, onClick }: any) => {
   return (
     <button
-      onClick={() => setSelected(title)}
-      className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-200 px-3.5 ${isSelected
-        ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
-        : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
+      onClick={onClick}
+      className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-500 px-3.5 ${isSelected
+        ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-black shadow-[inset_0_1px_rgba(245,158,11,0.05)]"
+        : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-500 font-bold"
         }`}
     >
       <div className="flex items-center gap-3.5">
-        <Icon className={`h-5 w-5 ${isSelected ? "text-gray-900 dark:text-white stroke-[2.5]" : "text-gray-500 dark:text-[#8b919d] stroke-2"}`} />
-        <span className="text-[15px] pt-[1px]">{title}</span>
+        <Icon className={`h-5 w-5 ${isSelected ? "text-amber-600 dark:text-amber-500 stroke-[3]" : "text-gray-400 dark:text-[#3f3f46] stroke-2"}`} />
+        <span className="text-[15px] pt-[0.5px] tracking-tight">{title}</span>
       </div>
+      {isSelected && (
+        <div className="absolute left-0 w-1 h-5 bg-amber-500 rounded-r-full shadow-[0_0_12px_rgba(245,158,11,0.5)]" />
+      )}
     </button>
   );
 };
@@ -767,19 +863,18 @@ const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, on
   );
 };
 
-const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }: any) => {
-  const isSelected = selected === title;
+const ProjectFile = ({ title, Icon = FileText, isSelected, onClick, onDelete }: any) => {
   return (
     <div className="flex flex-col group relative">
       <button
-        onClick={() => setSelected(title)}
+        onClick={onClick}
         className={`relative flex h-8 w-full items-center justify-between rounded-md px-2 transition-colors ${isSelected
-          ? "bg-gray-200/60 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold"
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-200/40 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
+          ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-bold"
+          : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 font-medium hover:text-amber-600 dark:hover:text-amber-500"
           }`}
       >
         <div className="flex items-center gap-2 pl-4">
-          <Icon className={`h-4 w-4 ${isSelected ? "text-gray-900 dark:text-white" : "text-gray-400"}`} />
+          <Icon className={`h-4 w-4 ${isSelected ? "text-amber-600 dark:text-amber-500" : "text-gray-400"}`} />
           <span className="text-[14px] pt-[1px]">{title}</span>
         </div>
       </button>

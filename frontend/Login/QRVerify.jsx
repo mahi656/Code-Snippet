@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import api from '../../api/api';
-import { toast } from '../ui/Notification.jsx';
+import api from '../src/api/api';
+import { toast } from '../src/components/ui/Notification.jsx';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
 
