@@ -283,8 +283,7 @@ export const Example = () => {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  const location = useLocation();
-  const navigate = useNavigate();
+
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
