@@ -9,12 +9,12 @@ import {
   Edit3,
   History
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatStandardDate } from '../../utils/dateUtils';
 import { toast } from '../ui/Notification.jsx';
 import { motion } from 'framer-motion';
 
 const SnippetCard = ({ snippet, onFavorite, onDelete, onEdit, onHistory, onRestore, isDark, view }) => {
-  const formattedDate = format(new Date(snippet.createdAt), 'MMM dd, yyyy');
+  const formattedDate = formatStandardDate(snippet.createdAt);
 
   return (
     <motion.div

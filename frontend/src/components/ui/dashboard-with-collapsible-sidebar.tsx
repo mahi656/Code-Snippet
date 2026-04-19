@@ -33,6 +33,10 @@ import SnippetCard from "../Snippet/SnippetCard.jsx";
 import VersionHistory from "../Snippet/VersionHistory.jsx";
 import api from "../../api/api";
 import { toast } from "./Notification.jsx";
+import { getTagColor } from "../../utils/tag-lang-colors";
+import { formatFullDate } from "../../utils/dateUtils";
+import TagList from "../Tag/TagList.jsx";
+import LanguageList from "../Language/LanguageList.jsx";
 
 export const Example = () => {
   console.log("Dashboard (Example) Rendering...");
@@ -204,7 +208,7 @@ export const Example = () => {
         framework: version.framework,
         tags: version.tags,
         code: version.code,
-        changeNote: `Restored to version from ${format(new Date(version.createdAt), 'MMM dd, HH:mm')}`
+        changeNote: `Restored to version from ${formatFullDate(version.createdAt)}`
       });
 
       if (response.data && response.data.success) {
@@ -395,18 +399,6 @@ export const Example = () => {
       />
     </div>
   );
-};
-
-const getTagColor = (name: string) => {
-  const colors = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
 };
 
 const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag, languages, selectedLanguage, setSelectedLanguage }: any) => {
@@ -633,75 +625,23 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
             </CollapsibleGroup>
 
             <CollapsibleGroup title="Tags" Icon={Tag} defaultExpanded>
-              <div className="mt-1 flex flex-col space-y-0.5">
-                {tags.length > 0 ? (
-                  tags.map((tag: any) => (
-                    <button
-                      key={tag.name}
-                      onClick={() => {
-                        setSelectedTag(tag.name);
-                        setSelected("Tag");
-                      }}
-                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-200 px-3 ${selected === "Tag" && selectedTag === tag.name
-                          ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
-                          : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div
-                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
-                          style={{ backgroundColor: getTagColor(tag.name) }}
-                        />
-                        <span className="text-[14px] truncate flex-1 text-left">{tag.name}</span>
-                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${selected === "Tag" && selectedTag === tag.name
-                            ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
-                            : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
-                          }`}>
-                          {tag.snippetCount}
-                        </span>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No tags defined yet</div>
-                )}
-              </div>
+              <TagList
+                tags={tags}
+                selected={selected}
+                selectedTag={selectedTag}
+                setSelectedTag={setSelectedTag}
+                setSelected={setSelected}
+              />
             </CollapsibleGroup>
 
             <CollapsibleGroup title="Languages" Icon={CodeXml} defaultExpanded>
-              <div className="mt-1 flex flex-col space-y-0.5">
-                {languages.length > 0 ? (
-                  languages.map((lang: any) => (
-                    <button
-                      key={lang.name}
-                      onClick={() => {
-                        setSelectedLanguage(lang.name);
-                        setSelected("Language");
-                      }}
-                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-200 px-3 ${selected === "Language" && selectedLanguage === lang.name
-                          ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
-                          : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div
-                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
-                          style={{ backgroundColor: getTagColor(lang.name) }}
-                        />
-                        <span className="text-[14px] truncate flex-1 text-left capitalize">{lang.name}</span>
-                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${selected === "Language" && selectedLanguage === lang.name
-                            ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
-                            : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
-                          }`}>
-                          {lang.snippetCount}
-                        </span>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No languages defined yet</div>
-                )}
-              </div>
+              <LanguageList
+                languages={languages}
+                selected={selected}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
+                setSelected={setSelected}
+              />
             </CollapsibleGroup>
           </div>
           <div className="pb-4" />
