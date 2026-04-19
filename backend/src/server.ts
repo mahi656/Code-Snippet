@@ -40,9 +40,25 @@ class App {
     }
 
     private initializeMiddlewares(): void {
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const normalizeUrl = (url: string): string => url.replace(/\/+$/, '');
+        const frontendUrl = normalizeUrl(process.env.FRONTEND_URL || 'http://localhost:5173');
+
+        this.app.set('trust proxy', 1);
         this.app.use(cors({
-            origin: frontendUrl,
+            origin: (origin, callback) => {
+                if (!origin) {
+                    callback(null, true);
+                    return;
+                }
+
+                const requestOrigin = normalizeUrl(origin);
+                if (requestOrigin === frontendUrl) {
+                    callback(null, true);
+                    return;
+                }
+
+                callback(new Error('Not allowed by CORS'));
+            },
             credentials: true
         }));
         this.app.use(express.json());

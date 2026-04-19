@@ -16,11 +16,16 @@ class GithubAuthRoutes {
         this.router.get('/github/callback', this.githubCallback);
     }
 
+    private normalizeUrl(url: string): string {
+        return url.replace(/\/+$/, '');
+    }
+
     private githubLogin(req: Request, res: Response): void {
         const clientId = process.env.GITHUB_CLIENT_ID;
-        const host = req.get('host');
-        const protocol = req.protocol;
-        const redirectUri = encodeURIComponent(`${protocol}://${host}/OAuth/github/callback`);
+        const backendUrl = process.env.BACKEND_URL
+            ? this.normalizeUrl(process.env.BACKEND_URL)
+            : `${req.protocol}://${req.get('host')}`;
+        const redirectUri = encodeURIComponent(`${backendUrl}/OAuth/github/callback`);
         const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email`;
         res.redirect(githubAuthUrl);
     }
@@ -66,11 +71,15 @@ class GithubAuthRoutes {
             }
             const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-            const clientUrl = process.env.FRONTEND_URL || `http://${req.get('host')?.split(':')[0]}:5173`;
+            const clientUrl = this.normalizeUrl(
+                process.env.FRONTEND_URL || `http://${req.get('host')?.split(':')[0]}:5173`
+            );
             res.redirect(`${clientUrl}/dashboard?token=${jwtToken}&username=${encodeURIComponent(user.username)}`);
         } catch (err: any) {
             console.error('OAuth Error:', err.message);
-            const clientUrl = process.env.FRONTEND_URL || `http://${req.get('host')?.split(':')[0]}:5173`;
+            const clientUrl = this.normalizeUrl(
+                process.env.FRONTEND_URL || `http://${req.get('host')?.split(':')[0]}:5173`
+            );
             res.redirect(`${clientUrl}/login?error=oauth_failed`);
         }
     }
