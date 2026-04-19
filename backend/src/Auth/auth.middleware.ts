@@ -10,13 +10,18 @@ export interface AuthRequest extends Request {
 
 export const authMiddleware = (req: any, res: Response, next: NextFunction): void => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
+    const jwtSecret = process.env.JWT_SECRET;
 
     if (!token) {
         return next(new ApiError(401, 'No token, authorization denied'));
     }
 
+    if (!jwtSecret) {
+        return next(new ApiError(500, 'JWT secret is not configured'));
+    }
+
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123') as { user: { id: string } };
+        const decoded = jwt.verify(token, jwtSecret) as { user: { id: string } };
         req.user = decoded.user;
         next();
     } catch (error) {

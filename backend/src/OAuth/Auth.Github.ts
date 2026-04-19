@@ -16,11 +16,11 @@ class GithubAuthRoutes {
         this.router.get('/github/callback', this.githubCallback);
     }
 
-    private normalizeUrl(url: string): string {
+    private normalizeUrl = (url: string): string => {
         return url.replace(/\/+$/, '');
-    }
+    };
 
-    private githubLogin(req: Request, res: Response): void {
+    private githubLogin = (req: Request, res: Response): void => {
         const clientId = process.env.GITHUB_CLIENT_ID;
         const backendUrl = process.env.BACKEND_URL
             ? this.normalizeUrl(process.env.BACKEND_URL)
@@ -28,9 +28,9 @@ class GithubAuthRoutes {
         const redirectUri = encodeURIComponent(`${backendUrl}/OAuth/github/callback`);
         const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email`;
         res.redirect(githubAuthUrl);
-    }
+    };
 
-    private async githubCallback(req: Request, res: Response): Promise<void> {
+    private githubCallback = async (req: Request, res: Response): Promise<void> => {
         const code = req.query.code as string;
         const clientId = process.env.GITHUB_CLIENT_ID;
         const clientSecret = process.env.GITHUB_CLIENT_SECRET;
@@ -82,7 +82,7 @@ class GithubAuthRoutes {
             );
             res.redirect(`${clientUrl}/login?error=oauth_failed`);
         }
-    }
+    };
 }
 
 export default new GithubAuthRoutes().router;

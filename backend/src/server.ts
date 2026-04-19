@@ -68,6 +68,10 @@ class App {
     }
 
     private initializeRoutes(): void {
+        this.app.get('/health', (_req, res) => {
+            res.status(200).json({ success: true, message: 'Server is running' });
+        });
+
         this.app.use('/auth', AuthRoutes);
         this.app.use('/auth/qr', QRRoutes);
         this.app.use('/OAuth', GithubAuthRoutes);
