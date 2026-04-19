@@ -28,7 +28,7 @@ class QRController {
             if (localIp !== 'localhost') break;
         }
 
-        res.status(200).json(new ApiResponse(200, { ip: localIp, port: 5001 }, 'Config fetched'));
+        res.status(200).json(new ApiResponse(200, { ip: localIp, port: process.env.PORT || 5001 }, 'Config fetched'));
     });
 
     // 1. Generate a new QR token (Public)
