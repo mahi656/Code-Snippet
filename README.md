@@ -1,6 +1,6 @@
-# SESD (Secure Electronic Snippet Dashboard)
+# Code Snippet Dashboard
 
-**The Developer's Second Brain.** A premium, high-performance workspace for code snippet management, version control, and productivity tracking.
+A premium, high-performance workspace for code snippet management, version control, and productivity tracking.
 
 ---
 
