@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose, { Types } from 'mongoose';
 import { AuthRequest } from '../Auth/auth.middleware';
 import CalendarEvent from './calendar.model';
 import Snippet from '../Snippet/snippet.model';
@@ -62,6 +63,48 @@ class CalendarController {
         }
 
         res.status(200).json(new ApiResponse(200, null, 'Event deleted successfully'));
+    });
+
+    /**
+     * Get a summary of activity (snippet creations/updates) for the heat map
+     */
+    public getActivitySummary = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.id;
+        const { start, end } = req.query;
+
+        if (!start || !end) {
+            throw new ApiError(400, 'Start and end dates are required');
+        }
+
+        const startDate = new Date(start as string);
+        const endDate = new Date(end as string);
+        endDate.setHours(23, 59, 59, 999); // Ensure full inclusive day
+
+        // Aggregate snippets modified in this range
+        const activity = await Snippet.aggregate([
+            {
+                $match: {
+                    userId: new Types.ObjectId(userId),
+                    updatedAt: { $gte: startDate, $lte: endDate }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$updatedAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    date: "$_id",
+                    count: 1
+                }
+            },
+            { $sort: { date: 1 } }
+        ]);
+
+        res.status(200).json(new ApiResponse(200, activity, 'Activity summary fetched successfully'));
     });
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../src/api/api';
 import {
   ArrowLeft, Users, BookOpen, MapPin, Link2, Building2,
-  Calendar, Twitter, ExternalLink
+  Calendar, ExternalLink
 } from 'lucide-react';
 
 const GitHubIcon = ({ className = "w-4 h-4" }) => (

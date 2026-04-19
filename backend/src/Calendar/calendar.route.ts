@@ -10,6 +10,7 @@ router.use(authMiddleware as any);
 // Routes for dedicated calendar events
 router.post('/events', CalendarController.createEvent);
 router.get('/events', CalendarController.getMyEvents);
+router.get('/activity', CalendarController.getActivitySummary);
 router.delete('/events/:id', CalendarController.deleteEvent);
 
 // Route for fetching snippets that are marked to show in calendar
