@@ -147,29 +147,7 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
                 </div>
               </div>
             </div>
-
-            <div className="flex flex-col items-center gap-4 md:flex-row md:gap-4">
-              <div className="inline-flex w-full -space-x-px rounded-md shadow-sm md:w-auto rtl:space-x-reverse border border-gray-200 dark:border-neutral-800">
-                <Button onClick={previousMonth} className="h-9 rounded-none rounded-l-md border-0 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-gray-400" variant="ghost" size="icon">
-                  <ChevronLeftIcon size={16} strokeWidth={2} />
-                </Button>
-                <Button onClick={goToToday} className="h-9 w-full rounded-none border-0 border-x border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-900 dark:text-gray-100 font-medium md:w-auto" variant="ghost">
-                  Today
-                </Button>
-                <Button onClick={nextMonth} className="h-9 rounded-none rounded-r-md border-0 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-gray-400" variant="ghost" size="icon">
-                  <ChevronRightIcon size={16} strokeWidth={2} />
-                </Button>
-              </div>
-
-              <Button
-                onClick={() => setIsModalOpen(true)}
-                className="h-9 w-full gap-2 md:w-auto bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 dark:text-black font-semibold"
-              >
-                <PlusCircleIcon size={16} strokeWidth={2} aria-hidden="true" />
-                <span>Add Milestone</span>
-              </Button>
             </div>
-          </div>
 
           <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-neutral-900 border-none">
             <div className="grid grid-cols-7 border-b border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-950 text-center text-xs uppercase tracking-wider font-semibold leading-6 text-gray-500 dark:text-gray-400 py-1.5 flex-none font-bold">
@@ -322,12 +300,18 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 bg-white dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 hover:border-blue-500/50 hover:bg-gray-50 dark:hover:bg-neutral-900 text-gray-900 dark:text-gray-100 font-bold text-sm shadow-xl shadow-gray-200/20 dark:shadow-black/10 transition-all hover:scale-[1.02] active:scale-[0.98] group"
+            className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl group border-none ${
+              isDark 
+                ? "bg-[#d6c7b0] text-black hover:bg-[#c5b4a0]" 
+                : "bg-[#8a7a66] text-white hover:bg-[#7a6a56] shadow-neutral-200/50"
+            }`}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 dark:bg-neutral-900 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
+              isDark ? "bg-black/10 group-hover:bg-black/20" : "bg-white/10 group-hover:bg-white/20"
+            }`}>
               <PlusCircleIcon size={18} className="stroke-[2.5]" />
             </div>
-            <span>Schedule Milestone</span>
+            <span className="font-bold text-sm tracking-tight">Schedule Milestone</span>
           </button>
         </div>
       )}
