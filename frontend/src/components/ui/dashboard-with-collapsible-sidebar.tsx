@@ -47,8 +47,10 @@ export const Example = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingSnippet, setEditingSnippet] = useState<any | null>(null);
   const [versionSnippetId, setVersionSnippetId] = useState<string | null>(null);
+  const [tags, setTags] = useState<any[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const fetchSnippets = async (tab = selected, query = searchQuery) => {
+  const fetchSnippets = async (tab = selected, query = searchQuery, tag = selectedTag) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
@@ -59,6 +61,7 @@ export const Example = () => {
         const filters: any = {};
         if (tab === "Favorites") filters.isFavorite = "true";
         if (tab === "Trash") filters.isDeleted = "true";
+        if (tab === "Tag" && tag) filters.tag = tag;
         
         const params = new URLSearchParams({ q: query, ...filters });
         response = await api.get(`/api/search?${params.toString()}`);
@@ -66,7 +69,15 @@ export const Example = () => {
           setGlobalSnippets(response.data.data.results || []);
         }
       } else {
-        const endpoint = tab === "Trash" ? '/api/trash/' : '/api/snippets/';
+        let endpoint;
+        if (tab === "Trash") {
+          endpoint = '/api/trash/';
+        } else if (tab === "Tag" && tag) {
+          endpoint = `/api/tags/${tag.toLowerCase()}/snippets`;
+        } else {
+          endpoint = '/api/snippets/';
+        }
+        
         response = await api.get(endpoint);
         if (response.data && response.data.data) {
           let snippets = response.data.data;
@@ -86,11 +97,23 @@ export const Example = () => {
     }
   };
 
-  useEffect(() => {
-    if (["All Snippets", "Favorites", "Trash"].includes(selected)) {
-      fetchSnippets(selected);
+  const fetchTags = async () => {
+    try {
+      const response = await api.get('/api/tags');
+      if (response.data && response.data.data) {
+        setTags(response.data.data);
+      }
+    } catch (err) {
+      console.error("Fetch tags error:", err);
     }
-  }, [selected]);
+  };
+
+  useEffect(() => {
+    if (["All Snippets", "Favorites", "Trash", "Tag"].includes(selected)) {
+      fetchSnippets(selected, searchQuery, selectedTag);
+    }
+    fetchTags();
+  }, [selected, selectedTag]);
 
   // Removed redundant useEffect. Fetching is now handled by the Auth Guard below.
 
@@ -190,8 +213,8 @@ export const Example = () => {
   // Debounced search effect
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (["All Snippets", "Favorites", "Trash"].includes(selected)) {
-        fetchSnippets(selected, searchQuery);
+      if (["All Snippets", "Favorites", "Trash", "Tag"].includes(selected)) {
+        fetchSnippets(selected, searchQuery, selectedTag);
       }
     }, 300);
 
@@ -235,6 +258,9 @@ export const Example = () => {
           setIsDark={setIsDark}
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
+          tags={tags}
+          selectedTag={selectedTag}
+          setSelectedTag={setSelectedTag}
         />
         {/* Toggle Button when Sidebar is Hidden */}
         {!isSidebarOpen && (
@@ -254,11 +280,12 @@ export const Example = () => {
           <div className="flex-1 overflow-hidden h-screen flex flex-col bg-white dark:bg-black">
             <ProfilePage onBack={() => setSelected("All Snippets")} isDark={isDark} />
           </div>
-        ) : ["All Snippets", "Favorites", "Trash"].includes(selected) ? (
+        ) : ["All Snippets", "Favorites", "Trash", "Tag"].includes(selected) ? (
           <ExampleContent
             isDark={isDark}
             setIsDark={setIsDark}
             selected={selected}
+            selectedTag={selectedTag}
             isSidebarOpen={isSidebarOpen}
             snippets={globalSnippets}
             isLoading={isLoading}
@@ -349,7 +376,19 @@ export const Example = () => {
   );
 };
 
-const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen }: any) => {
+const getTagColor = (name: string) => {
+  const colors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
+    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag }: any) => {
   const username = localStorage.getItem('username') || "User";
   const userInitial = username.charAt(0).toUpperCase();
 
@@ -572,8 +611,42 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
               </div>
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Tags" Icon={Tag}>
-              <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No tags defined yet</div>
+            <CollapsibleGroup title="Tags" Icon={Tag} defaultExpanded>
+              <div className="mt-1 flex flex-col space-y-0.5">
+                {tags.length > 0 ? (
+                  tags.map((tag: any) => (
+                    <button
+                      key={tag.name}
+                      onClick={() => {
+                        setSelectedTag(tag.name);
+                        setSelected("Tag");
+                      }}
+                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-200 px-3 ${
+                        selected === "Tag" && selectedTag === tag.name
+                          ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                          : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div 
+                          className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]" 
+                          style={{ backgroundColor: getTagColor(tag.name) }} 
+                        />
+                        <span className="text-[14px] truncate flex-1 text-left">{tag.name}</span>
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${
+                          selected === "Tag" && selectedTag === tag.name
+                            ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
+                            : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
+                        }`}>
+                          {tag.snippetCount}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="py-2 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No tags defined yet</div>
+                )}
+              </div>
             </CollapsibleGroup>
 
             <CollapsibleGroup title="Languages" Icon={CodeXml}>
@@ -732,7 +805,7 @@ const ProjectFile = ({ title, Icon = FileText, selected, setSelected, onDelete }
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
+const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
   const safeSnippets = Array.isArray(snippets) ? snippets : [];
   
   // Backend now handles filtering, so we just use safeSnippets directly
@@ -742,7 +815,16 @@ const ExampleContent = ({ isDark, setIsDark, selected, isSidebarOpen, snippets =
     <div className="flex-1 bg-white dark:bg-black flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className={`h-[4.5rem] flex items-center gap-4 border-b border-gray-100 dark:border-[#27272a] shrink-0 transition-all ${isSidebarOpen ? 'px-8' : 'pl-20 pr-8'}`}>
-        <h1 className="text-[22px] font-medium tracking-tight capitalize text-gray-900 dark:text-white flex-1">{selected}</h1>
+        <div className="flex items-center gap-3 flex-1">
+          <h1 className="text-[22px] font-medium tracking-tight capitalize text-gray-900 dark:text-white">
+            {selected === "Tag" ? (
+              <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getTagColor(selectedTag || "") }} />
+                <span>{selectedTag}</span>
+              </div>
+            ) : selected}
+          </h1>
+        </div>
         <div className="flex items-center gap-5">
           {selected === "Trash" && snippets.some((s: any) => s.isDeleted) && (
             <button
