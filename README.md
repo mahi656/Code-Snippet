@@ -63,6 +63,3 @@ npm run dev
 ```
 
 ---
-
-## 📄 License
-SESD is open-source software licensed under the MIT license.
