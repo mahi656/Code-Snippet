@@ -66,14 +66,12 @@ class GithubAuthRoutes {
             }
             const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-            const clientHostname = req.get('host')?.split(':')[0] || 'localhost';
-            const clientUrl = `http://${clientHostname}:5173`;
-
+            const clientUrl = process.env.FRONTEND_URL || `http://${req.get('host')?.split(':')[0]}:5173`;
             res.redirect(`${clientUrl}/dashboard?token=${jwtToken}&username=${encodeURIComponent(user.username)}`);
         } catch (err: any) {
             console.error('OAuth Error:', err.message);
-            const clientHostname = req.get('host')?.split(':')[0] || 'localhost';
-            res.redirect(`http://${clientHostname}:5173/login?error=oauth_failed`);
+            const clientUrl = process.env.FRONTEND_URL || `http://${req.get('host')?.split(':')[0]}:5173`;
+            res.redirect(`${clientUrl}/login?error=oauth_failed`);
         }
     }
 }

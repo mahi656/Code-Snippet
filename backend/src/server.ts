@@ -40,7 +40,11 @@ class App {
     }
 
     private initializeMiddlewares(): void {
-        this.app.use(cors());
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        this.app.use(cors({
+            origin: frontendUrl,
+            credentials: true
+        }));
         this.app.use(express.json());
 
         // Serve uploaded files as static assets
