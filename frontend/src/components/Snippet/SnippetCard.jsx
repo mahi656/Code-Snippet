@@ -21,12 +21,12 @@ const SnippetCard = ({ snippet, onFavorite, onDelete, onEdit, onHistory, onResto
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       layout
-      className="group relative bg-white dark:bg-[#09090b] border border-gray-200 dark:border-[#1e1e20] rounded-[24px] p-6 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:border-amber-500/50 dark:hover:border-amber-500/50 transition-all duration-500 transform hover:-translate-y-2"
+      className="group relative bg-white dark:bg-[#09090b] border border-gray-200 dark:border-[#1e1e20] rounded-[24px] p-6 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:border-violet-500/50 dark:hover:border-violet-500/50 transition-all duration-500 transform hover:-translate-y-2"
     >
       {/* Top Bar: Language & Actions */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-500/20">
+          <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-violet-600/10 text-violet-600 dark:text-violet-400 border border-violet-600/20">
             <Code className="h-4.5 w-4.5" />
           </div>
           <div className="flex flex-col">

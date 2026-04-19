@@ -86,6 +86,8 @@ export const Example = () => {
       setSelected("Profile");
     } else if (path.startsWith("/dashboard/new")) {
       setSelected("New Snippet");
+    } else if (path.startsWith("/dashboard/edit/")) {
+      setSelected("New Snippet");
     } else if (path.startsWith("/dashboard/tags/")) {
       const tag = path.split("/").pop();
       setSelected("Tag");
@@ -283,8 +285,6 @@ export const Example = () => {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const token = params.get('token');
@@ -308,6 +308,24 @@ export const Example = () => {
       }
     }
   }, [location, navigate]);
+
+  // Recover editing state from URL on refresh
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith("/dashboard/edit/")) {
+      const id = path.split("/").pop();
+      if (id && (!editingSnippet || editingSnippet._id !== id)) {
+        const found = globalSnippets.find(s => s._id === id);
+        if (found) {
+          console.log("Recovered editing snippet:", found.title);
+          setEditingSnippet(found);
+        }
+      }
+    } else if (selected !== "New Snippet") {
+      // Clear editing state if navigating away from edit view
+      if (editingSnippet) setEditingSnippet(null);
+    }
+  }, [location.pathname, globalSnippets, selected]);
 
   return (
     <div className={`flex min-h-screen w-full font-sans antialiased ${isDark ? "dark" : ""}`}>
@@ -496,27 +514,20 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
   };
 
   return (
-    <nav className={`flex shrink-0 flex-col bg-[#f8f9fa] dark:bg-[#09090b] h-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] z-40 ${isSidebarOpen ? 'w-72 border-r border-gray-200 dark:border-[#27272a] opacity-100' : 'w-0 border-r-0 opacity-0 pointer-events-none'}`}>
+    <nav className={`flex shrink-0 flex-col bg-[#f8f9fa] dark:bg-[#0f1113] h-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] z-40 ${isSidebarOpen ? 'w-72 border-r border-gray-200 dark:border-[#27272a] opacity-100' : 'w-0 border-r-0 opacity-0 pointer-events-none'}`}>
       <div className="w-72 h-full flex flex-col overflow-hidden">
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center shrink-0">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full">
-                <path d="M4 12C4 7.58172 7.58172 4 12 4H28C32.4183 4 36 7.58172 36 12V28C36 32.4183 32.4183 36 28 36H12C7.58172 36 4 32.4183 4 28V12Z" fill="url(#brand-grad)" fillOpacity="0.15" />
-                <rect x="8" y="8" width="10" height="10" rx="3" fill="url(#brand-grad)" />
-                <rect x="22" y="22" width="10" height="10" rx="3" fill="url(#brand-grad)" />
-                <defs>
-                  <linearGradient id="brand-grad" x1="8" y1="8" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#f59e0b" />
-                    <stop offset="1" stopColor="#f97316" />
-                  </linearGradient>
-                </defs>
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full text-gray-900 dark:text-white">
+                <rect x="4" y="4" width="14" height="14" rx="4" fill="currentColor" fillOpacity="1" />
+                <rect x="22" y="22" width="14" height="14" rx="4" fill="currentColor" fillOpacity="1" />
+                <rect x="4" y="22" width="14" height="14" rx="4" fill="currentColor" fillOpacity="0.25" />
+                <rect x="22" y="4" width="14" height="14" rx="4" fill="currentColor" fillOpacity="0.25" />
               </svg>
             </div>
-            <span className="text-[19px] font-black tracking-[-0.02em] bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-gray-300 to-gray-500 drop-shadow-sm">
-              CodeSnippet
-            </span>
+            <span className="text-[17px] font-medium text-gray-900 dark:text-white mt-0.5 tracking-tight">CodeSnippet</span>
           </div>
 
           <button
@@ -599,7 +610,7 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                           key={item.id}
                           title={item.name}
                           isSelected={selected === "ProjectFile" && selectedTag === item.name} // Assuming ProjectFile logic similar to tags for now
-                          onClick={() => handleNavigate("ProjectFile", item.name)} 
+                          onClick={() => handleNavigate("ProjectFile", item.name)}
                           onDelete={() => handleDeleteItem(proj.id, item.id)}
                         />
                       )
@@ -680,8 +691,8 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                       key={tag.name}
                       onClick={() => handleNavigate("Tag", tag.name)}
                       className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 ${selected === "Tag" && selectedTag === tag.name
-                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-bold shadow-[inset_0_1px_rgba(245,158,11,0.05)]"
-                        : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-500 font-medium"
+                        ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-bold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
+                        : "text-gray-500 dark:text-[#71717a] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 hover:text-gray-900 dark:hover:text-gray-200 font-medium"
                         }`}
                     >
                       <div className="flex items-center gap-3 w-full">
@@ -713,8 +724,8 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                       key={lang.name}
                       onClick={() => handleNavigate("Language", lang.name)}
                       className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 ${selected === "Language" && selectedLanguage === lang.name
-                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-bold shadow-[inset_0_1px_rgba(245,158,11,0.05)]"
-                        : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-500 font-medium"
+                        ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-bold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
+                        : "text-gray-500 dark:text-[#71717a] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 hover:text-gray-900 dark:hover:text-gray-200 font-medium"
                         }`}
                     >
                       <div className="flex items-center gap-3 w-full">
@@ -755,19 +766,19 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
               className="flex items-center justify-between w-full p-1.5 bg-gray-100/50 hover:bg-gray-200/80 dark:bg-[#1a1c1e] dark:hover:bg-[#272a2d] border border-transparent rounded-full cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-200 via-gray-400 to-gray-600 text-black font-black text-[16px] shadow-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0d3b44] text-[#7de5ed] font-bold text-[15px] shadow-sm">
                   {userInitial}
                 </div>
                 <div className="flex flex-col items-start -mt-0.5">
-                  <span className="text-[14px] font-black text-gray-900 dark:text-white tracking-tight leading-tight">
+                  <span className="text-[14px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">
                     {username}
                   </span>
-                  <span className="text-[10px] font-black text-gray-400 dark:text-[#4b4b4f] uppercase tracking-[0.15em] leading-tight">
+                  <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-tight">
                     My Profile
                   </span>
                 </div>
               </div>
-              <MoreVertical className="h-[18px] w-[18px] text-gray-400 mr-2 shrink-0 hover:text-amber-500 transition-colors" />
+              <MoreVertical className="h-[18px] w-[18px] text-gray-400 mr-2 shrink-0" />
             </div>
           </div>
         </div>
@@ -780,18 +791,15 @@ const Option = ({ Icon, title, isSelected, onClick }: any) => {
   return (
     <button
       onClick={onClick}
-      className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-500 px-3.5 ${isSelected
-        ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-black shadow-[inset_0_1px_rgba(245,158,11,0.05)]"
-        : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-500 font-bold"
+      className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-200 px-3.5 ${isSelected
+        ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
+        : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
         }`}
     >
       <div className="flex items-center gap-3.5">
-        <Icon className={`h-5 w-5 ${isSelected ? "text-amber-600 dark:text-amber-500 stroke-[3]" : "text-gray-400 dark:text-[#3f3f46] stroke-2"}`} />
-        <span className="text-[15px] pt-[0.5px] tracking-tight">{title}</span>
+        <Icon className={`h-5 w-5 ${isSelected ? "text-gray-900 dark:text-white stroke-[2.5]" : "text-gray-500 dark:text-[#8b919d] stroke-2"}`} />
+        <span className="text-[15px] pt-[1px]">{title}</span>
       </div>
-      {isSelected && (
-        <div className="absolute left-0 w-1 h-5 bg-amber-500 rounded-r-full shadow-[0_0_12px_rgba(245,158,11,0.5)]" />
-      )}
     </button>
   );
 };
@@ -868,12 +876,12 @@ const ProjectFile = ({ title, Icon = FileText, isSelected, onClick, onDelete }: 
       <button
         onClick={onClick}
         className={`relative flex h-8 w-full items-center justify-between rounded-md px-2 transition-colors ${isSelected
-          ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 font-bold"
-          : "text-gray-500 dark:text-[#71717a] hover:bg-amber-500/5 dark:hover:bg-amber-500/5 font-medium hover:text-amber-600 dark:hover:text-amber-500"
+          ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-200/40 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
           }`}
       >
         <div className="flex items-center gap-2 pl-4">
-          <Icon className={`h-4 w-4 ${isSelected ? "text-amber-600 dark:text-amber-500" : "text-gray-400"}`} />
+          <Icon className={`h-4 w-4 ${isSelected ? "text-gray-900 dark:text-white" : "text-gray-400"}`} />
           <span className="text-[14px] pt-[1px]">{title}</span>
         </div>
       </button>

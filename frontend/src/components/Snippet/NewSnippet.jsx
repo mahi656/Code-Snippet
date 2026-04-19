@@ -286,7 +286,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
       // Only warn if they've actually typed something beyond the default comment
       if (code && code !== '// Start coding here...') {
         const isDuplicateCode = snippets.some(
-          (s) => s.code?.trim() === code
+          (s) => s.code?.trim() === code && s._id !== snippet?._id
         );
 
         if (isDuplicateCode) {
