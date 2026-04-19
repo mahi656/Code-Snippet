@@ -1,35 +1,50 @@
 ```mermaid
 erDiagram
+    USER ||--o{ SNIPPET : owns
+    USER ||--o{ CALENDAR_EVENT : tracks
+    SNIPPET ||--o{ VERSION : versions
+    SNIPPET |o--o{ CALENDAR_EVENT : "optionally linked to"
 
-USER ||--o{ SNIPPET : owns
-SNIPPET ||--o{ VERSION : has
-SNIPPET ||--o{ FILE : contains
+    USER {
+        string username
+        string fullName
+        string email
+        string password
+        string githubId
+        string avatar_url
+        string bio
+    }
 
-USER {
-  string id
-  string name
-  string email
-  string password
-}
+    SNIPPET {
+        string title
+        string description
+        string language
+        string framework
+        string code
+        string visibility
+        string[] tags
+        boolean isFavorite
+        boolean showInCalendar
+        date calendarDate
+        string[] attachments
+        boolean isDeleted
+    }
 
-SNIPPET {
-  string id
-  string title
-  string code
-  string language
-  date created_at
-}
+    VERSION {
+        string snippetId
+        string title
+        string code
+        string language
+        string changeNote
+        date createdAt
+    }
 
-VERSION {
-  string id
-  string snippet_id
-  string content
-  date created_at
-}
-
-FILE {
-  string id
-  string snippet_id
-  string path
-}
+    CALENDAR_EVENT {
+        string title
+        string description
+        date date
+        string snippetId
+        boolean isCompleted
+        date createdAt
+    }
 ```

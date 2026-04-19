@@ -1,14 +1,29 @@
 ```mermaid
-flowchart TD
-    User --> Register
-    User --> Login
-    User --> CreateSnippet
-    User --> EditSnippet
-    User --> DeleteSnippet
-    User --> ViewHistory
-    User --> RestoreVersion
-    User --> UploadFile
-    User --> SearchSnippets
+flowchart LR
+    subgraph Users
+        Developer
+    end
 
-    Admin --> MonitorLogs
+    subgraph Authentication
+        Developer --> LoginQR[QR Login]
+        Developer --> LoginGitHub[GitHub OAuth]
+        Developer --> Register[Standard Register]
+    end
+
+    subgraph SnippetManagement
+        Developer --> Create[Create Snippet]
+        Developer --> VersionControl[View/Restore History]
+        Developer --> Search[Advanced Search]
+        Developer --> Favorites[Manage Favorites]
+        Developer --> Trash[Trash & Recovery]
+    end
+
+    subgraph Productivity
+        Developer --> Calendar[Manage Milestones]
+        Developer --> Activity[Track Activity Levels]
+    end
+
+    subgraph Administration
+        System --> Logs[Morgan/Winston Logging]
+    end
 ```

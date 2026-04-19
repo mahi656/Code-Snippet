@@ -1,84 +1,64 @@
 ## Project Title
 
-**Code Snippet Manager with Version Control**
+**Code Snippet Manager with Version Control & Productivity Tracking**
 
 ---
 
 ## Problem Statement
 
-Developers often save useful code snippets in random places such as notes apps, chat messages, or multiple files. Over time, these snippets become hard to organize, search, and update. When changes are made, previous versions are lost, making it difficult to revert to earlier working code.
+Developers often save useful code snippets in random places (notes apps, chat messages) making them hard to organize, search, and update. Traditional managers often lack deep version history or local file attachment support. Additionally, developers lack a specialized tool to track their coding milestones and project-specific goals in a calendar-integrated environment.
 
 ---
 
 ## Proposed Solution
 
-Build a web-based application that allows users to securely store, organize, and manage code snippets with built-in version control.
+A professional, high-performance web application designed for developers to securely store, version, and organize code snippets. 
 
-The system will automatically save previous versions whenever a snippet is updated, allowing users to view history and restore older versions when needed.
+The system provides a **Git-like version control** mechanism, **productivity milestone tracking** via an interactive calendar, and **seamless authentication** through QR and GitHub OAuth.
 
 ---
 
 ## Objectives
 
-* Provide a centralized platform to store code snippets
-* Enable version tracking similar to Git
-* Allow users to restore previous versions
-* Support file/image uploads related to snippets
-* Provide fast search and filtering options
+*   **Centralized Storage**: Securely store snippets in over 50+ languages.
+*   **Version Tracking**: Automatically capture changes and allow full-state restoration.
+*   **Productivity Mapping**: Integrate milestones into a calendar view to track progress.
+*   **Secure Access**: Provide modern authentication methods (OAuth, QR).
+*   **Advanced Search**: Filter by language, tags, and dependencies with high-speed indexing.
 
 ---
 
 ## Key Features
 
-### 1. Authentication
+### 1. Smart Authentication
+*   **GitHub OAuth**: Single-click login with profile sync.
+*   **QR Login**: Secure, device-to-device authentication.
+*   **JWT Security**: Robust session management.
 
-* User registration and login
-* Secure access using JWT authentication
+### 2. Advanced Snippet Management
+*   **Multi-layered Versioning**: Every save creates a restorable snapshot with change notes.
+*   **Dynamic Tagging**: Organize code by technology stack and custom labels.
+*   **Visibility Control**: Toggle between Public, Private, and Unlisted modes.
+*   **Attachments**: Attach relevant design docs or screenshots directly to snippets.
 
-### 2. Snippet Management
+### 3. Productivity Calendar (Milestones)
+*   **Visual Roadmap**: Track project milestones on an interactive calendar.
+*   **Contribution Activity**: Heatmaps/Activity indicators based on coding frequency.
+*   **Task Integration**: Link milestones directly to existing code snippets.
 
-* Create, edit, and delete snippets
-* Save snippets in multiple programming languages
-* Add tags for better organization
-
-### 3. Version Control (Core Feature)
-
-* Each edit creates a new version
-* Old versions remain stored
-* Users can view version history
-* Users can restore previous versions
-
-### 4. File Upload Support
-
-* Upload images or files using Multer
-* Attach files to snippets
-
-### 5. Search & Filter
-
-* Search by title or keyword
-* Filter by language or tags
-
-### 6. Logging & Monitoring
-
-* Request logging using Morgan
-* Error and system logging using Winston
+### 4. Search & Workflow
+*   **Instant Search**: Debounced, backend-integrated search across all fields.
+*   **Trash System**: Safely delete and restore snippets with a 30-day retention period.
+*   **Favorites**: Quick-access dashboard for frequently used modules.
 
 ---
 
 ## Scope of the Project
 
-This project focuses on backend system design, version control logic, secure authentication, and structured data management, along with a simple and user-friendly frontend interface.
-
----
-
-## Target Users
-
-* Students learning programming
-* Software developers
-* Coding enthusiasts
+This project leverages the **MERN stack (MongoDB, Express, React, Node.js)** with **TypeScript** for type-safe backend development. The frontend utilizes **Vite**, **Tailwind CSS**, and **Lucide Icons** to deliver a premium, pro-grade user interface.
 
 ---
 
 ## Expected Outcome
 
-A functional web application that helps users manage and version their code snippets efficiently, preventing loss of previous work and improving productivity.
+A world-class productivity tool that serves as a developer's second brain—ensuring no code is lost and every milestone is tracked.

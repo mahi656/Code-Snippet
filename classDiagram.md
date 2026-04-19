@@ -1,33 +1,53 @@
 ```mermaid
 classDiagram
+    class User {
+        +String username
+        +String fullName
+        +String email
+        +String githubId
+        +String avatar_url
+        +login()
+        +logout()
+        +syncGitHub()
+    }
 
-class User {
-  +ObjectId id
-  +String name
-  +String email
-  +String passwordHash
-  +Date createdAt
-}
+    class Snippet {
+        +String title
+        +String description
+        +String language
+        +String code
+        +String visibility
+        +Boolean isFavorite
+        +Boolean showInCalendar
+        +String[] attachments
+        +create()
+        +update()
+        +delete()
+        +toggleFavorite()
+    }
 
-class Snippet {
-  +ObjectId id
-  +String title
-  +String language
-  +ObjectId userId
-  +ObjectId currentVersionId
-  +Date createdAt
-  +Date updatedAt
-}
+    class Version {
+        +ObjectId snippetId
+        +String title
+        +String code
+        +String changeNote
+        +Date createdAt
+        +restore()
+    }
 
-class Version {
-  +ObjectId id
-  +ObjectId snippetId
-  +Text codeContent
-  +Number versionNumber
-  +Date createdAt
-}
+    class CalendarEvent {
+        +String title
+        +String description
+        +Date date
+        +Boolean isCompleted
+        +ObjectId snippetId
+        +create()
+        +update()
+        +complete()
+    }
 
-User "1" --> "many" Snippet : owns
-Snippet "1" --> "many" Version : stores
-Snippet "1" --> "1" Version : current
+    User "1" -- "*" Snippet : manages
+    User "1" -- "*" CalendarEvent : schedules
+    Snippet "1" -- "*" Version : history
+    CalendarEvent "0..1" -- "0..1" Snippet : references
 ```
