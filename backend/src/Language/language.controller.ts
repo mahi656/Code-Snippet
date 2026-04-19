@@ -44,7 +44,8 @@ class LanguageController {
 
         const snippets = await Snippet.find({
             userId,
-            language: (languageName as string).toLowerCase()
+            language: (languageName as string).toLowerCase(),
+            isDeleted: { $ne: true }
         }).sort({ createdAt: -1 });
 
         res.status(200).json(new ApiResponse(200, snippets, 'Snippets fetched successfully'));

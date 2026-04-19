@@ -201,7 +201,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
     attachments: []
   });
 
-  // Pre-fill form if editing
+  // Pre-fill form if editing, or reset if not
   React.useEffect(() => {
     if (isEditing && snippet) {
       setFormData({
@@ -218,6 +218,23 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
         showInCalendar: !!snippet.showInCalendar,
         calendarDate: snippet.calendarDate || '',
         attachments: snippet.attachments || []
+      });
+    } else if (!isEditing) {
+      // Reset form to default empty state
+      setFormData({
+        title: '',
+        description: '',
+        language: 'javascript',
+        framework: 'none',
+        visibility: 'private',
+        dependencies: '',
+        code: '// Start coding here...',
+        tags: '',
+        isFavorite: false,
+        changeNote: '',
+        showInCalendar: false,
+        calendarDate: '',
+        attachments: []
       });
     }
   }, [isEditing, snippet]);
@@ -345,25 +362,25 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
       {/* Header */}
       <div className="flex items-center justify-between px-8 h-[4.5rem] border-b border-gray-100 dark:border-[#27272a] shrink-0">
         <div />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-[14px] font-medium text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 rounded-xl transition-all duration-200 shadow-sm"
+            className="h-10 px-5 text-[14px] font-semibold text-gray-600 dark:text-gray-400 bg-white dark:bg-transparent border border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-900 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/30 rounded-xl transition-all duration-200"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#7c3aed] hover:bg-[#8b5cf6] text-[14px] font-medium text-white shadow-[0_10px_20px_-10px_rgba(124,58,237,0.5)] transition-all duration-200 active:scale-[0.98] group disabled:opacity-70 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 h-10 px-6 rounded-xl bg-gray-900 dark:bg-white hover:bg-black dark:hover:bg-gray-100 active:bg-gray-800 dark:active:bg-gray-200 text-[14px] font-bold text-white dark:text-black shadow-[0_4px_12px_-4px_rgba(0,0,0,0.3)] transition-all duration-200 active:scale-[0.97] disabled:opacity-70 disabled:cursor-not-allowed group"
           >
             {isSaving ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-gray-500/30 border-t-gray-500 rounded-full animate-spin" />
             ) : (
-              <Save className="h-4 w-4 text-white/90 group-hover:scale-110 transition-transform" />
+              <Save className="h-4 w-4 text-gray-400 dark:text-gray-500 group-hover:scale-110 transition-transform" />
             )}
-            {isSaving ? 'Saving...' : (isEditing ? 'Save as New Version' : 'Save Snippet')}
+            <span>{isSaving ? 'Saving...' : (isEditing ? 'Save as New Version' : 'Save Snippet')}</span>
           </button>
         </div>
       </div>

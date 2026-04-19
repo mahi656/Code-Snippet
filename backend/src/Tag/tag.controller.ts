@@ -46,7 +46,8 @@ class TagController {
 
         const snippets = await Snippet.find({
             userId,
-            tags: (tagName as string).toLowerCase()
+            tags: (tagName as string).toLowerCase(),
+            isDeleted: { $ne: true }
         }).sort({ createdAt: -1 });
 
         res.status(200).json(new ApiResponse(200, snippets, 'Snippets fetched successfully'));

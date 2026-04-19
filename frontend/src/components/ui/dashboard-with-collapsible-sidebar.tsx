@@ -57,7 +57,6 @@ export const Example = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Unified Navigation Handler
   const handleNavigate = (view: string, subValue: string | null = null, shouldClear = true) => {
     // If we're already on this tab and no sub-value changed, just refresh data without clearing UI
     const isSameView = selected === view &&
@@ -115,8 +114,24 @@ export const Example = () => {
       setSelected("Profile");
     } else if (path.startsWith("/dashboard/new")) {
       setSelected("New Snippet");
+      setEditingSnippet(null);
     } else if (path.startsWith("/dashboard/edit/")) {
+      const id = path.split("/").pop();
       setSelected("New Snippet");
+      // Restore editing state if it's missing or mismatched (e.g. after refresh)
+      if (id && (!editingSnippet || editingSnippet._id !== id)) {
+        const existing = globalSnippets.find(s => s._id === id);
+        if (existing) {
+          setEditingSnippet(existing);
+        } else {
+          // Direct fetch from API for resilience
+          api.get(`/api/snippets/${id}`).then(res => {
+            if (res.data && res.data.success) {
+              setEditingSnippet(res.data.data.snippet);
+            }
+          }).catch(err => console.error("Snippet restoration failed:", err));
+        }
+      }
     } else if (path.startsWith("/dashboard/tags/")) {
       const tag = path.split("/").pop();
       setSelected("Tag");
@@ -223,7 +238,9 @@ export const Example = () => {
       const response = await api.put(`/api/snippets/${id}`, { isFavorite });
       if (response.data) {
         setGlobalSnippets(prev =>
-          prev.map(s => s._id === id ? { ...s, isFavorite } : s)
+          selected === "Favorites" && !isFavorite
+            ? prev.filter(s => s._id !== id)
+            : prev.map(s => s._id === id ? { ...s, isFavorite } : s)
         );
         toast(isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
       }
