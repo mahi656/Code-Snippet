@@ -45,7 +45,7 @@ export const Example = () => {
 
   // Real project implementation: Store our created snippets globally!
   const [globalSnippets, setGlobalSnippets] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingSnippet, setEditingSnippet] = useState<any | null>(null);
@@ -58,7 +58,36 @@ export const Example = () => {
   const location = useLocation();
 
   // Unified Navigation Handler
-  const handleNavigate = (view: string, subValue: string | null = null) => {
+  const handleNavigate = (view: string, subValue: string | null = null, shouldClear = true) => {
+    // If we're already on this tab and no sub-value changed, just refresh data without clearing UI
+    const isSameView = selected === view &&
+      (view === "Tag" ? selectedTag === subValue :
+        view === "Language" ? selectedLanguage === subValue : true);
+
+    if (isSameView && view !== "New Snippet" && view !== "Profile") {
+      fetchSnippets(view, "", subValue || selectedTag, view === "Language" ? subValue : selectedLanguage);
+      return;
+    }
+
+    // Synchronize UI state immediately for instant feedback
+    setSelected(view);
+    if (view === "Tag") setSelectedTag(subValue);
+    else if (view === "Language") setSelectedLanguage(subValue);
+    else if (view !== "New Snippet") {
+      setSelectedTag(null);
+      setSelectedLanguage(null);
+    }
+
+    // Clear content only if requested (standard navigation)
+    // We skip clearing on save to ensure the newly saved item is visible immediately
+    if (shouldClear) {
+      setGlobalSnippets([]);
+      setSearchQuery("");
+      setIsAddingSnippet(false);
+      setEditingSnippet(null);
+    }
+
+    // Update URL
     if (view === "All Snippets") navigate("/dashboard");
     else if (view === "Favorites") navigate("/dashboard/favorites");
     else if (view === "Trash") navigate("/dashboard/trash");
@@ -119,6 +148,7 @@ export const Example = () => {
           setGlobalSnippets(response.data.data.results || []);
         }
       } else {
+        // Direct endpoint category mapping
         let endpoint;
         if (tab === "Trash") {
           endpoint = '/api/trash/';
@@ -130,11 +160,13 @@ export const Example = () => {
           endpoint = '/api/snippets/';
         }
 
-        response = await api.get(endpoint);
-        if (response.data && response.data.data) {
-          let snippets = response.data.data;
+        const res = await api.get(endpoint);
+        const fetchedData = res.data?.data;
+        if (fetchedData) {
+          let snippets = Array.isArray(fetchedData) ? fetchedData : [];
+          // Local favorites filter if backend doesn't have dedicated favorites yet
           if (tab === "Favorites") {
-            snippets = snippets.filter((s: any) => s.isFavorite);
+            snippets = snippets.filter((s: any) => s.isFavorite && !s.isDeleted);
           }
           setGlobalSnippets(snippets);
         }
@@ -172,14 +204,19 @@ export const Example = () => {
   };
 
   useEffect(() => {
-    if (["All Snippets", "Favorites", "Trash", "Tag", "Language"].includes(selected)) {
-      fetchSnippets(selected, searchQuery, selectedTag, selectedLanguage);
-    }
     fetchTags();
     fetchLanguages();
-  }, [selected, selectedTag, selectedLanguage]);
+  }, []);
+  // This prevents race conditions when switching between languages or searching
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (["All Snippets", "Favorites", "Trash", "Tag", "Language"].includes(selected)) {
+        fetchSnippets(selected, searchQuery, selectedTag, selectedLanguage);
+      }
+    }, 150); // Balanced debounce for both navigation and search
 
-  // Removed redundant useEffect. Fetching is now handled by the Auth Guard below.
+    return () => clearTimeout(handler);
+  }, [selected, selectedTag, selectedLanguage, searchQuery]);
 
   const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
     try {
@@ -211,8 +248,10 @@ export const Example = () => {
         toast(isPermanent ? "Snippet permanently deleted" : "Snippet moved to trash", 'success');
         setDeleteId(null);
       }
-    } catch (err) {
-      toast("Failed to delete snippet", "error");
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      const errMsg = err.response?.data?.message || err.message || "Failed to delete snippet";
+      toast(errMsg, "error");
       setDeleteId(null);
     }
   };
@@ -224,8 +263,10 @@ export const Example = () => {
         setGlobalSnippets(prev => prev.filter(s => s._id !== id));
         toast("Snippet restored successfully", 'success');
       }
-    } catch (err) {
-      toast("Failed to restore snippet", "error");
+    } catch (err: any) {
+      console.error("Restore error:", err);
+      const errMsg = err.response?.data?.message || err.message || "Failed to restore snippet";
+      toast(errMsg, "error");
     }
   };
 
@@ -274,40 +315,28 @@ export const Example = () => {
     }
   }, [isDark]);
 
-  // Debounced search effect
+  // Navigation and search fetching is now consolidated in a single debounced effect above
+
+  // Optimized Auth Guard & Token Capture
+  // Runs once on mount to handle GitHub redirects or check legacy tokens
   useEffect(() => {
-    const handler = setTimeout(() => {
-      if (["All Snippets", "Favorites", "Trash", "Tag", "Language"].includes(selected)) {
-        fetchSnippets(selected, searchQuery, selectedTag, selectedLanguage);
-      }
-    }, 300);
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    const urlUsername = params.get('username');
 
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const token = params.get('token');
-    const username = params.get('username');
-
-    if (token) {
-      localStorage.setItem('token', token);
-      if (username) {
-        localStorage.setItem('username', username);
-      }
-      // Remove token from URL
+    if (urlToken) {
+      localStorage.setItem('token', urlToken);
+      if (urlUsername) localStorage.setItem('username', urlUsername);
+      // Clean URL, this will trigger the 'location' sync effect but not an immediate fetch
       navigate('/dashboard', { replace: true });
-      fetchSnippets();
-    } else {
-      // Auth Guard: check if token exists in localStorage
-      const storedToken = localStorage.getItem('token');
-      if (!storedToken) {
-        navigate('/login', { replace: true });
-      } else {
-        fetchSnippets();
-      }
+      return;
     }
-  }, [location, navigate]);
+
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken) {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]); // Removed 'location' to prevent re-running on every tab switch
 
   // Recover editing state from URL on refresh
   useEffect(() => {
@@ -404,7 +433,8 @@ export const Example = () => {
                   setGlobalSnippets(prev => [savedSnippet, ...prev]);
                 }
                 setEditingSnippet(null);
-                handleNavigate("All Snippets");
+                // Return to previous view but DON'T clear the snapshots we just updated
+                handleNavigate("All Snippets", null, false);
               }}
             />
           </div>
@@ -946,15 +976,9 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLang
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-auto p-8 scrollbar-hide">
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-48 rounded-2xl bg-gray-100 dark:bg-[#09090b] animate-pulse border border-gray-200 dark:border-[#27272a]"></div>
-            ))}
-          </div>
-        ) : filteredSnippets.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex-1 overflow-auto p-8 scrollbar-hide relative min-h-[500px]">
+        {filteredSnippets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500 fill-mode-both">
             {filteredSnippets.map((snippet: any) => (
               <SnippetCard
                 key={snippet._id}
@@ -969,7 +993,7 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLang
               />
             ))}
           </div>
-        ) : (
+        ) : !isLoading && (
           <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50/50 dark:bg-[#09090b]/50 p-8 shadow-sm flex flex-col items-center justify-center h-full min-h-[400px]">
             <div className="w-16 h-16 rounded-full bg-gray-200/50 dark:bg-[#27272a]/50 flex items-center justify-center mb-4">
               <FilePlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />

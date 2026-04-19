@@ -256,7 +256,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
   // This function runs when the user clicks the "Save Snippet" button
   const handleSubmit = async (e) => {
     e?.preventDefault?.(); // This stops the page from refreshing if called as a form submit
-    
+
     if (isSaving) return;
     setErrorText("");
 
@@ -297,23 +297,23 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
 
       // Step 4: If everything is okay, we save the snippet
       setIsSaving(true);
-      
+
       const payload = {
         ...formData,
         title: title,
         code: formData.code || '',
-        tags: typeof formData.tags === 'string' 
-          ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) 
+        tags: typeof formData.tags === 'string'
+          ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
           : [],
       };
 
       let response;
       if (isEditing && snippet) {
-        // If editing, we also need a change note
+        // Change note is MANDATORY for edits
         if (!formData.changeNote?.trim()) {
-           toast("Please provide a change note for this version", "error");
-           setIsSaving(false);
-           return;
+          toast("Please provide a brief note about what you changed.", "error");
+          setIsSaving(false);
+          return;
         }
         response = await api.put(`/api/snippets/${snippet._id}`, payload);
       } else {

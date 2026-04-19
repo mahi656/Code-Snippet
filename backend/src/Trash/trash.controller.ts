@@ -23,13 +23,13 @@ class TrashController {
         const userId = req.user?.id;
 
         const snippet = await Snippet.findOneAndUpdate(
-            { _id: id, userId, isDeleted: true },
+            { _id: id, userId }, // Relaxed from isDeleted: true
             { $set: { isDeleted: false }, $unset: { deletedAt: '' } },
             { new: true }
         );
 
         if (!snippet) {
-            throw new ApiError(404, 'Trashed snippet not found');
+            throw new ApiError(404, 'Snippet not found or unauthorized to restore');
         }
 
         res.status(200).json(new ApiResponse(200, { snippet }, 'Snippet restored successfully'));
@@ -40,10 +40,12 @@ class TrashController {
         const { id } = req.params;
         const userId = req.user?.id;
 
-        const snippet = await Snippet.findOneAndDelete({ _id: id, userId, isDeleted: true });
+        // Relaxed query: search by ID and UserID. If it's being deleted from the Trash context,
+        // we'll remove it regardless of the 'isDeleted' flag to ensure the UI stays in sync.
+        const snippet = await Snippet.findOneAndDelete({ _id: id, userId });
 
         if (!snippet) {
-            throw new ApiError(404, 'Trashed snippet not found');
+            throw new ApiError(404, 'Snippet not found or unauthorized to delete');
         }
 
         res.status(200).json(new ApiResponse(200, null, 'Snippet permanently deleted'));
