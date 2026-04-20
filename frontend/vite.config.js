@@ -16,7 +16,7 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      '/OAuth': 'https://code-snippet-olive.vercel.app',
+      '/OAuth': 'https://code-snippet-jb3k.onrender.com',
     },
   },
   resolve: {
