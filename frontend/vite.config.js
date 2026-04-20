@@ -16,7 +16,7 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      '/OAuth': 'http://127.0.0.1:5001',
+      '/OAuth': 'https://code-snippet-olive.vercel.app',
     },
   },
   resolve: {
