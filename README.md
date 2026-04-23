@@ -136,6 +136,10 @@ Cross-cutting concerns:
 - `GET /auth/:username` (protected)
 - `GET /OAuth/github`
 - `GET /OAuth/github/callback`
+<<<<<<< HEAD
+=======
+
+>>>>>>> 80ee390 (Remove QR Login system and switch to localhost)
 
 ### Snippets & Versions
 - `POST /api/snippets`
