@@ -11,6 +11,7 @@ import {
   isToday,
   parse,
   startOfToday,
+  sub,
   startOfWeek,
 } from "date-fns"
 import {
@@ -59,8 +60,8 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
       const eventsRes = await calendarApi.getEvents(monthNum, yearNum)
       setEvents(eventsRes.data.data)
 
-      const start = format(days[0], "yyyy-MM-dd")
-      const end = format(days[days.length - 1], "yyyy-MM-dd")
+      const start = format(days[0]!, "yyyy-MM-dd")
+      const end = format(days[days.length - 1]!, "yyyy-MM-dd")
       const activityRes = await calendarApi.getActivitySummary(start, end)
 
       const activityMap: Record<string, number> = {}
@@ -102,6 +103,89 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
     if (count < 10) return 3
     return 4
   }
+
+  const selectedDayEvents = events.filter(e => isSameDay(new Date(e.date), selectedDay))
+  const selectedDayKey = format(selectedDay, "yyyy-MM-dd")
+  const selectedDayActivity = activity[selectedDayKey] || 0
+  const effectiveSelectedActivity = selectedDayActivity > 0 ? selectedDayActivity : selectedDayEvents.length
+  const totalMilestonesTillNow = events.filter(event => new Date(event.date) <= today).length
+  const monthEvents = events
+    .filter(event => isSameMonth(new Date(event.date), firstDayCurrentMonth))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const latestMonthEvent = monthEvents[0]
+
+  const calendarInsights = React.useMemo(() => {
+    const monthStart = firstDayCurrentMonth
+    const monthEnd = endOfMonth(firstDayCurrentMonth)
+    const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+
+    let totalMonthActivity = 0
+    let activeDays = 0
+    let longestStreak = 0
+    let currentStreak = 0
+    let peakDay: Date | null = null
+    let peakCount = 0
+
+    monthDays.forEach((day) => {
+      const dayKey = format(day, "yyyy-MM-dd")
+      const dayCount = activity[dayKey] || 0
+
+      totalMonthActivity += dayCount
+
+      if (dayCount > 0) {
+        activeDays += 1
+        currentStreak += 1
+        if (currentStreak > longestStreak) longestStreak = currentStreak
+      } else {
+        currentStreak = 0
+      }
+
+      if (dayCount > peakCount) {
+        peakCount = dayCount
+        peakDay = day
+      }
+    })
+
+    const windowStart = sub(selectedDay, { days: 6 })
+    const recentWindow = eachDayOfInterval({ start: windowStart, end: selectedDay })
+    const priorWindow = eachDayOfInterval({
+      start: sub(windowStart, { days: 7 }),
+      end: sub(selectedDay, { days: 7 }),
+    })
+
+    const recentCount = recentWindow.reduce((sum, day) => {
+      return sum + (activity[format(day, "yyyy-MM-dd")] || 0)
+    }, 0)
+    const priorCount = priorWindow.reduce((sum, day) => {
+      return sum + (activity[format(day, "yyyy-MM-dd")] || 0)
+    }, 0)
+
+    const trendDelta = recentCount - priorCount
+
+    return {
+      totalMonthActivity,
+      activeDays,
+      longestStreak,
+      peakDay,
+      peakCount,
+      trendDelta,
+      recentCount,
+    }
+  }, [activity, firstDayCurrentMonth, selectedDay])
+
+  const statusLabel = effectiveSelectedActivity >= 10
+    ? "Peak Flow"
+    : effectiveSelectedActivity >= 5
+      ? "High Output"
+      : effectiveSelectedActivity > 0
+        ? "Active"
+        : "Planning Day"
+
+  const trendMessage = calendarInsights.trendDelta > 0
+    ? "Momentum is improving this week."
+    : calendarInsights.trendDelta < 0
+      ? "This week is slower than the previous one."
+      : "Weekly pace is steady."
 
   const handleMilestoneSaved = (newEvent: any) => {
     // Optimistically update the events list so it appears immediately
@@ -232,12 +316,12 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Daily Milestones</h4>
                   <div className="flex h-5 items-center px-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] font-black">
-                    {events.filter(e => isSameDay(new Date(e.date), selectedDay)).length}
+                    {selectedDayEvents.length}
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {events.filter(e => isSameDay(new Date(e.date), selectedDay)).length > 0 ? (
-                    events.filter(e => isSameDay(new Date(e.date), selectedDay)).map(event => (
+                  {selectedDayEvents.length > 0 ? (
+                    selectedDayEvents.map(event => (
                       <div key={event._id} className="group relative rounded-2xl border border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-950/30 p-4 hover:border-blue-500/40 transition-all cursor-default overflow-hidden">
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-1 leading-tight">{event.title}</p>
@@ -256,42 +340,61 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">System Activity</h4>
                   <div className="flex h-5 items-center px-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                    {activity[format(selectedDay, "yyyy-MM-dd")] || 0}
+                    {effectiveSelectedActivity}
                   </div>
                 </div>
                 <div className="p-5 rounded-2xl bg-gray-50/50 dark:bg-neutral-950/50 border border-gray-100 dark:border-neutral-800 relative overflow-hidden group">
                   <div className={cn(
                     "absolute inset-0 opacity-[0.03] transition-opacity group-hover:opacity-[0.06]",
-                    activity[format(selectedDay, "yyyy-MM-dd")] > 0 ? "bg-emerald-500" : "bg-gray-500"
+                    effectiveSelectedActivity > 0 ? "bg-emerald-500" : "bg-gray-500"
                   )} />
 
                   <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
                       <div className={cn(
                         "h-1.5 w-1.5 rounded-full",
-                        activity[format(selectedDay, "yyyy-MM-dd")] >= 10 ? "bg-emerald-500 animate-pulse" :
-                          activity[format(selectedDay, "yyyy-MM-dd")] >= 5 ? "bg-emerald-400" :
-                            activity[format(selectedDay, "yyyy-MM-dd")] > 0 ? "bg-emerald-300" : "bg-gray-400"
+                        effectiveSelectedActivity >= 10 ? "bg-emerald-500 animate-pulse" :
+                          effectiveSelectedActivity >= 5 ? "bg-emerald-400" :
+                            effectiveSelectedActivity > 0 ? "bg-emerald-300" : "bg-gray-400"
                       )} />
                       <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                        {activity[format(selectedDay, "yyyy-MM-dd")] >= 10 ? "Peak Flow" :
-                          activity[format(selectedDay, "yyyy-MM-dd")] >= 5 ? "High Output" :
-                            activity[format(selectedDay, "yyyy-MM-dd")] > 0 ? "Active" : "Idle"}
+                        {statusLabel}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed font-bold">
-                      {activity[format(selectedDay, "yyyy-MM-dd")]
-                        ? (
-                          <>
-                            Productivity Report: You documented {activity[format(selectedDay, "yyyy-MM-dd")]} code {activity[format(selectedDay, "yyyy-MM-dd")] === 1 ? 'snippet' : 'snippets'} in your workspace.
-                          </>
-                        )
-                        : (
-                          <>
-                            No developer activity detected for this specific date range.
-                          </>
-                        )}
+                      {`Total milestones till now: ${totalMilestonesTillNow}.`}
                     </p>
+                    <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed font-semibold">
+                      {monthEvents.length > 0
+                        ? `Calendar History: ${monthEvents.length} ${monthEvents.length === 1 ? "milestone" : "milestones"} saved this month. Latest: ${format(new Date(latestMonthEvent.date), "MMM d, yyyy")} - ${latestMonthEvent.title}.`
+                        : "Calendar History: No milestones saved in this month yet."}
+                    </p>
+                    <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed font-semibold">
+                      {trendMessage}
+                    </p>
+
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Monthly Total</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{calendarInsights.totalMonthActivity}</p>
+                      </div>
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Active Days</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{calendarInsights.activeDays}</p>
+                      </div>
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Best Streak</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                          {calendarInsights.longestStreak} {calendarInsights.longestStreak === 1 ? "day" : "days"}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Peak Day</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                          {calendarInsights.peakDay ? `${format(calendarInsights.peakDay, "MMM d")} (${calendarInsights.peakCount})` : "No data"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

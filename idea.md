@@ -14,7 +14,7 @@ Developers often save useful code snippets in random places (notes apps, chat me
 
 A professional, high-performance web application designed for developers to securely store, version, and organize code snippets. 
 
-The system provides a **Git-like version control** mechanism, **productivity milestone tracking** via an interactive calendar, and **seamless authentication** through QR and GitHub OAuth.
+The system provides a **Git-like version control** mechanism, **productivity milestone tracking** via an interactive calendar, and **seamless authentication** through credentials and GitHub OAuth.
 
 ---
 
@@ -23,7 +23,7 @@ The system provides a **Git-like version control** mechanism, **productivity mil
 *   **Centralized Storage**: Securely store snippets in over 50+ languages.
 *   **Version Tracking**: Automatically capture changes and allow full-state restoration.
 *   **Productivity Mapping**: Integrate milestones into a calendar view to track progress.
-*   **Secure Access**: Provide modern authentication methods (OAuth, QR).
+*   **Secure Access**: Provide modern authentication methods (credentials, OAuth).
 *   **Advanced Search**: Filter by language, tags, and dependencies with high-speed indexing.
 
 ---
@@ -32,7 +32,6 @@ The system provides a **Git-like version control** mechanism, **productivity mil
 
 ### 1. Smart Authentication
 *   **GitHub OAuth**: Single-click login with profile sync.
-*   **QR Login**: Secure, device-to-device authentication.
 *   **JWT Security**: Robust session management.
 
 ### 2. Advanced Snippet Management

@@ -4,7 +4,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import Database from './config/db';
 import AuthRoutes from './Auth/auth.route';
-import QRRoutes from './QR/qr.route';
 import GithubAuthRoutes from './OAuth/Auth.Github';
 import SnippetRoutes from './Snippet/snippet.route';
 import VersionRoutes from './Version/version.route';
@@ -73,7 +72,6 @@ class App {
         });
 
         this.app.use('/auth', AuthRoutes);
-        this.app.use('/auth/qr', QRRoutes);
         this.app.use('/OAuth', GithubAuthRoutes);
         this.app.use('/api/snippets', SnippetRoutes);
         this.app.use('/api/versions', VersionRoutes);

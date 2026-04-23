@@ -5,7 +5,7 @@ flowchart LR
     end
 
     subgraph Authentication
-        Developer --> LoginQR[QR Login]
+        Developer --> LoginEmail[Email Login]
         Developer --> LoginGitHub[GitHub OAuth]
         Developer --> Register[Standard Register]
     end

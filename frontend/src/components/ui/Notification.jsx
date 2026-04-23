@@ -15,7 +15,7 @@ const TOAST_DURATION = 4000;
 export const Notification = () => {
   const [toasts, setToasts] = useState([]);
   const location = useLocation();
-  const isAuthPage = ['/', '/login', '/signup', '/qr-login', '/qr-verify'].includes(location.pathname);
+  const isAuthPage = ['/', '/login', '/signup'].includes(location.pathname);
 
   const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
