@@ -22,7 +22,9 @@ import {
   Menu,
   MoreVertical,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  X,
+  Eye
 } from "lucide-react";
 
 import { FullScreenCalendar } from "./fullscreen-calendar.jsx";
@@ -45,6 +47,7 @@ export const Example = () => {
 
   // Real project implementation: Store our created snippets globally!
   const [globalSnippets, setGlobalSnippets] = useState<any[]>([]);
+  const [allSnippets, setAllSnippets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -54,6 +57,10 @@ export const Example = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [languages, setLanguages] = useState<any[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [viewingSnippet, setViewingSnippet] = useState<any | null>(null);
+  const [draftProjectName, setDraftProjectName] = useState<string>("");
+  const [draftFileName, setDraftFileName] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -72,9 +79,11 @@ export const Example = () => {
     setSelected(view);
     if (view === "Tag") setSelectedTag(subValue);
     else if (view === "Language") setSelectedLanguage(subValue);
+    else if (view === "Project") setSelectedProject(subValue);
     else if (view !== "New Snippet") {
       setSelectedTag(null);
       setSelectedLanguage(null);
+      setSelectedProject(null);
     }
 
     // Clear content only if requested (standard navigation)
@@ -90,11 +99,21 @@ export const Example = () => {
     if (view === "All Snippets") navigate("/dashboard");
     else if (view === "Favorites") navigate("/dashboard/favorites");
     else if (view === "Trash") navigate("/dashboard/trash");
+    else if (view === "Projects") navigate("/dashboard/projects");
     else if (view === "Calendar") navigate("/dashboard/calendar");
     else if (view === "Profile") navigate("/dashboard/profile");
     else if (view === "New Snippet") navigate("/dashboard/new");
     else if (view === "Tag" && subValue) navigate(`/dashboard/tags/${subValue.toLowerCase()}`);
     else if (view === "Language" && subValue) navigate(`/dashboard/languages/${subValue.toLowerCase()}`);
+  };
+
+  const fetchAllSnippets = async () => {
+    try {
+      const res = await api.get('/api/snippets/');
+      setAllSnippets(Array.isArray(res.data?.data) ? res.data.data : []);
+    } catch (err) {
+      console.error("Fetch all snippets error:", err);
+    }
   };
 
   // Sync state with URL
@@ -108,6 +127,8 @@ export const Example = () => {
       setSelected("Favorites");
     } else if (path.startsWith("/dashboard/trash")) {
       setSelected("Trash");
+    } else if (path.startsWith("/dashboard/projects")) {
+      setSelected("Projects");
     } else if (path.startsWith("/dashboard/calendar")) {
       setSelected("Calendar");
     } else if (path.startsWith("/dashboard/profile")) {
@@ -221,11 +242,37 @@ export const Example = () => {
   useEffect(() => {
     fetchTags();
     fetchLanguages();
+    fetchAllSnippets();
   }, []);
+
+  useEffect(() => {
+    if (!allSnippets.length) return;
+
+    if (!tags.length) {
+      const tagMap: Record<string, number> = {};
+      allSnippets.forEach((snippet: any) => {
+        (snippet.tags || [])
+          .filter((tag: string) => typeof tag === "string" && !tag.startsWith("project:"))
+          .forEach((tag: string) => {
+            tagMap[tag] = (tagMap[tag] || 0) + 1;
+          });
+      });
+      setTags(Object.entries(tagMap).map(([name, snippetCount]) => ({ name, snippetCount })));
+    }
+
+    if (!languages.length) {
+      const langMap: Record<string, number> = {};
+      allSnippets.forEach((snippet: any) => {
+        if (!snippet.language) return;
+        langMap[snippet.language] = (langMap[snippet.language] || 0) + 1;
+      });
+      setLanguages(Object.entries(langMap).map(([name, snippetCount]) => ({ name, snippetCount })));
+    }
+  }, [allSnippets, tags.length, languages.length]);
   // This prevents race conditions when switching between languages or searching
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (["All Snippets", "Favorites", "Trash", "Tag", "Language"].includes(selected)) {
+      if (["All Snippets", "Favorites", "Trash", "Tag", "Language", "Projects"].includes(selected)) {
         fetchSnippets(selected, searchQuery, selectedTag, selectedLanguage);
       }
     }, 150); // Balanced debounce for both navigation and search
@@ -242,6 +289,7 @@ export const Example = () => {
             ? prev.filter(s => s._id !== id)
             : prev.map(s => s._id === id ? { ...s, isFavorite } : s)
         );
+        setAllSnippets(prev => prev.map(s => s._id === id ? { ...s, isFavorite } : s));
         toast(isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
       }
     } catch (err) {
@@ -262,6 +310,7 @@ export const Example = () => {
       const response = await api.delete(endpoint);
       if (response.data) {
         setGlobalSnippets(prev => prev.filter(s => s._id !== id));
+        setAllSnippets(prev => prev.filter(s => s._id !== id));
         toast(isPermanent ? "Snippet permanently deleted" : "Snippet moved to trash", 'success');
         setDeleteId(null);
       }
@@ -278,6 +327,7 @@ export const Example = () => {
       const response = await api.patch(`/api/trash/${id}/restore`);
       if (response.data) {
         setGlobalSnippets(prev => prev.filter(s => s._id !== id));
+        fetchAllSnippets();
         toast("Snippet restored successfully", 'success');
       }
     } catch (err: any) {
@@ -292,6 +342,7 @@ export const Example = () => {
       const response = await api.delete('/api/trash/');
       if (response.data) {
         setGlobalSnippets([]);
+        fetchAllSnippets();
         toast("Trash emptied", 'success');
       }
     } catch (err) {
@@ -389,13 +440,25 @@ export const Example = () => {
           languages={languages}
           selectedLanguage={selectedLanguage}
           setSelectedLanguage={setSelectedLanguage}
+          selectedProject={selectedProject}
+          setSelectedProject={setSelectedProject}
+          snippets={allSnippets}
+          onViewSnippet={(snippet: any) => {
+            setViewingSnippet(snippet);
+            setSelected("ProjectFile");
+          }}
+          onCreateSnippetForProject={(projectName: string, fileName?: string) => {
+            setDraftProjectName(projectName);
+            setDraftFileName(fileName || "");
+            handleNavigate("New Snippet");
+          }}
           handleNavigate={handleNavigate}
         />
         {/* Toggle Button when Sidebar is Hidden */}
         {!isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="absolute top-[22px] left-6 z-50 p-2.5 rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] text-gray-500 hover:text-gray-900 dark:text-[#a1a1aa] dark:hover:text-white shadow-sm transition-all hover:scale-105 active:scale-95"
+            className="absolute top-5 left-5 z-50 h-11 w-11 inline-flex items-center justify-center rounded-xl border border-gray-200/90 dark:border-[#2b2b31] bg-white/95 dark:bg-[#101015]/95 text-gray-500 hover:text-gray-900 dark:text-[#a1a1aa] dark:hover:text-white shadow-[0_8px_26px_rgba(0,0,0,0.08)] dark:shadow-[0_14px_30px_rgba(0,0,0,0.35)] transition-all hover:-translate-y-[1px] active:scale-[0.98]"
             title="Expand Sidebar"
           >
             <PanelLeftOpen className="h-5 w-5" />
@@ -432,6 +495,28 @@ export const Example = () => {
             }}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            statsSource={allSnippets}
+          />
+        ) : selected === "Projects" ? (
+          <ProjectWorkspaceView
+            snippets={allSnippets}
+            onViewSnippet={(snippet: any) => {
+              setViewingSnippet(snippet);
+              setSelected("ProjectFile");
+            }}
+            onCreateSnippetForProject={(projectName: string, fileName?: string) => {
+              setDraftProjectName(projectName);
+              setDraftFileName(fileName || "");
+              handleNavigate("New Snippet");
+            }}
+          />
+        ) : selected === "ProjectFile" && viewingSnippet ? (
+          <SnippetDetailsView
+            snippet={viewingSnippet}
+            onBack={() => {
+              setViewingSnippet(null);
+              handleNavigate("All Snippets");
+            }}
           />
         ) : (
           <div className="flex-1 overflow-hidden h-screen bg-white dark:bg-[#09090b]">
@@ -441,6 +526,15 @@ export const Example = () => {
                 handleNavigate("All Snippets");
               }}
               existingSnippets={globalSnippets}
+              projects={Array.from(new Set(
+                allSnippets
+                  .flatMap((s: any) => s.tags || [])
+                  .filter((tag: string) => typeof tag === "string" && tag.startsWith("project:"))
+                  .map((tag: string) => tag.replace("project:", ""))
+                  .filter(Boolean)
+              ))}
+              initialProjectName={draftProjectName}
+              initialTitle={draftFileName}
               isEditing={!!editingSnippet}
               snippet={editingSnippet}
               onSave={(savedSnippet: any) => {
@@ -449,6 +543,12 @@ export const Example = () => {
                 } else {
                   setGlobalSnippets(prev => [savedSnippet, ...prev]);
                 }
+                setAllSnippets(prev => {
+                  const exists = prev.some(s => s._id === savedSnippet._id);
+                  return exists ? prev.map(s => s._id === savedSnippet._id ? savedSnippet : s) : [savedSnippet, ...prev];
+                });
+                setDraftProjectName("");
+                setDraftFileName("");
                 setEditingSnippet(null);
                 // Return to previous view but DON'T clear the snapshots we just updated
                 handleNavigate("All Snippets", null, false);
@@ -507,57 +607,86 @@ export const Example = () => {
   );
 };
 
-const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag, languages, selectedLanguage, setSelectedLanguage, handleNavigate }: any) => {
+const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag, languages, selectedLanguage, setSelectedLanguage, selectedProject, setSelectedProject, snippets = [], onViewSnippet, onCreateSnippetForProject, handleNavigate }: any) => {
   const username = localStorage.getItem('username') || "User";
   const userInitial = username.charAt(0).toUpperCase();
 
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [projectFiles, setProjectFiles] = useState<Record<string, { id: number; name: string }[]>>({});
+  const [projectFolders, setProjectFolders] = useState<Record<string, { id: number; name: string }[]>>({});
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
-
-  const [creatingItemInProjectId, setCreatingItemInProjectId] = useState<number | null>(null);
-  const [creatingItemType, setCreatingItemType] = useState<"file" | "folder" | null>(null);
+  const [newItemContext, setNewItemContext] = useState<{ projectName: string; type: "file" | "folder" } | null>(null);
   const [newItemName, setNewItemName] = useState("");
 
+  useEffect(() => {
+    const stored = localStorage.getItem("dashboard.projects");
+    if (!stored) return;
+    try {
+      setProjects(JSON.parse(stored));
+    } catch {
+      setProjects([]);
+    }
+
+    const storedFiles = localStorage.getItem("dashboard.projectFiles");
+    if (storedFiles) {
+      try {
+        setProjectFiles(JSON.parse(storedFiles));
+      } catch {
+        setProjectFiles({});
+      }
+    }
+
+    const storedFolders = localStorage.getItem("dashboard.projectFolders");
+    if (storedFolders) {
+      try {
+        setProjectFolders(JSON.parse(storedFolders));
+      } catch {
+        setProjectFolders({});
+      }
+    }
+  }, []);
+
   const handleCreateProject = () => {
-    if (newProjectName.trim()) {
-      setProjects([...projects, { id: Date.now(), name: newProjectName.trim(), items: [] }]);
+    const normalized = newProjectName.trim();
+    if (normalized && !projects.includes(normalized)) {
+      const next = [...projects, normalized];
+      setProjects(next);
+      localStorage.setItem("dashboard.projects", JSON.stringify(next));
     }
     setNewProjectName("");
     setIsCreatingProject(false);
   };
 
-  const handleCreateItem = () => {
-    if (newItemName.trim() && creatingItemInProjectId) {
-      setProjects(projects.map(p => {
-        if (p.id === creatingItemInProjectId) {
-          return {
-            ...p,
-            items: [...(p.items || []), { id: Date.now(), name: newItemName.trim(), type: creatingItemType }]
-          };
-        }
-        return p;
-      }));
+  const snippetProjects = Array.from(new Set(
+    snippets
+      .flatMap((s: any) => s.tags || [])
+      .filter((tag: string) => typeof tag === "string" && tag.startsWith("project:"))
+      .map((tag: string) => tag.replace("project:", ""))
+      .filter(Boolean)
+  ));
+  const allProjects = Array.from(new Set([...projects, ...snippetProjects]));
+
+  const addProjectItem = (projectName: string, type: "file" | "folder", name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    if (type === "folder") {
+      const next = {
+        ...projectFolders,
+        [projectName]: [...(projectFolders[projectName] || []), { id: Date.now(), name: trimmed }]
+      };
+      setProjectFolders(next);
+      localStorage.setItem("dashboard.projectFolders", JSON.stringify(next));
+      return;
     }
-    setNewItemName("");
-    setCreatingItemInProjectId(null);
-    setCreatingItemType(null);
-  };
 
-  const handleDeleteProject = (projectId: number) => {
-    setProjects(projects.filter(p => p.id !== projectId));
-  };
-
-  const handleDeleteItem = (projectId: number, itemId: number) => {
-    setProjects(projects.map(p => {
-      if (p.id === projectId) {
-        return {
-          ...p,
-          items: p.items.filter((i: any) => i.id !== itemId)
-        };
-      }
-      return p;
-    }));
+    const next = {
+      ...projectFiles,
+      [projectName]: [...(projectFiles[projectName] || []), { id: Date.now(), name: trimmed }]
+    };
+    setProjectFiles(next);
+    localStorage.setItem("dashboard.projectFiles", JSON.stringify(next));
   };
 
   return (
@@ -579,7 +708,7 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
 
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-[#27272a] transition-colors"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-transparent hover:border-gray-200 dark:hover:border-[#2b2b31] text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-[#1b1b20] transition-all"
             title="Collapse Sidebar"
           >
             <PanelLeftClose className="h-5 w-5" />
@@ -589,7 +718,7 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
         <div className="px-5 py-4">
           <button
             onClick={() => handleNavigate("New Snippet")}
-            className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-[14px] font-semibold py-2.5 rounded-xl shadow-md transition-all hover:-translate-y-[1px] active:scale-[0.98] border border-gray-800/10 dark:border-white/10"
+            className="w-full flex items-center justify-center gap-2 bg-white dark:bg-[#111114] text-zinc-900 dark:text-zinc-100 text-[14px] font-semibold py-2.5 rounded-2xl border border-gray-200 dark:border-[#2a2a30] shadow-[0_1px_0_rgba(255,255,255,0.35)_inset,0_8px_22px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_10px_24px_rgba(0,0,0,0.28)] transition-all hover:border-gray-300 dark:hover:border-[#3a3a42] hover:bg-gray-50 dark:hover:bg-[#15151a] active:scale-[0.99]"
           >
             <Plus className="h-4 w-4 stroke-[2.5]" />
             New Snippet
@@ -625,68 +754,109 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
             isSelected={selected === "Trash"}
             onClick={() => handleNavigate("Trash")}
           />
+          <Option
+            Icon={Folder}
+            title="Projects"
+            isSelected={selected === "Projects"}
+            onClick={() => handleNavigate("Projects")}
+          />
 
           <div className="my-6 border-b border-gray-200 dark:border-neutral-800/40 w-[85%] mx-auto" />
 
           <div className="space-y-4">
             <CollapsibleGroup title="Projects" Icon={Folder} defaultExpanded>
               <div className="mt-1 flex flex-col space-y-1">
-
-                {/* Render Existing Projects */}
-                {projects.map((proj: any) => (
+                {allProjects.map((proj: string) => (
                   <ProjectFolder
-                    key={proj.id}
-                    title={proj.name}
+                    key={proj}
+                    title={proj}
                     defaultExpanded
-                    onNewFile={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("file"); setNewItemName(""); }}
-                    onNewFolder={() => { setCreatingItemInProjectId(proj.id); setCreatingItemType("folder"); setNewItemName(""); }}
-                    onDelete={() => handleDeleteProject(proj.id)}
+                    onAddFile={() => {
+                      setNewItemContext({ projectName: proj, type: "file" });
+                      setNewItemName("");
+                    }}
+                    onAddFolder={() => {
+                      setNewItemContext({ projectName: proj, type: "folder" });
+                      setNewItemName("");
+                    }}
+                    onCreateSnippet={() => onCreateSnippetForProject(proj)}
                   >
-                    {/* Render Items */}
-                    {proj.items?.map((item: any) => (
-                      item.type === "folder" ? (
-                        <ProjectFolder
-                          key={item.id}
-                          title={item.name}
-                          onDelete={() => handleDeleteItem(proj.id, item.id)}
-                        >
-                          <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty</div>
-                        </ProjectFolder>
-                      ) : (
-                        <ProjectFile
-                          key={item.id}
-                          title={item.name}
-                          isSelected={selected === "ProjectFile" && selectedTag === item.name} // Assuming ProjectFile logic similar to tags for now
-                          onClick={() => handleNavigate("ProjectFile", item.name)}
-                          onDelete={() => handleDeleteItem(proj.id, item.id)}
-                        />
-                      )
+                    {(projectFolders[proj] || []).map((folder) => (
+                      <div key={folder.id} className="flex items-center gap-2 pl-4 h-8 text-[13px] text-gray-500 dark:text-gray-400">
+                        <Folder className="h-3.5 w-3.5 text-[#a78bfa]" />
+                        <span className="truncate">{folder.name}</span>
+                      </div>
                     ))}
 
-                    {/* Inline Input for New Item directly inside project */}
-                    {creatingItemInProjectId === proj.id && (
-                      <div className="flex items-center gap-2 px-1 py-1 ml-1 mt-0.5 border border-[#a78bfa] rounded bg-white dark:bg-[#09090b]">
-                        {creatingItemType === "folder" ? <Folder className="h-3 w-3 text-[#a78bfa] shrink-0" /> : <FileText className="h-3 w-3 text-[#a78bfa] shrink-0" />}
+                    {(projectFiles[proj] || []).map((file) => (
+                      <ProjectFile
+                        key={file.id}
+                        title={file.name}
+                        isSelected={false}
+                        onCreateSnippet={() => onCreateSnippetForProject(proj, file.name)}
+                        onClick={() => {
+                          const linked = snippets.find((snippet: any) =>
+                            (snippet.tags || []).includes(`project:${proj}`) && snippet.title === file.name
+                          );
+                          if (linked) {
+                            setSelectedProject(proj);
+                            onViewSnippet(linked);
+                          } else {
+                            onCreateSnippetForProject(proj, file.name);
+                          }
+                        }}
+                      />
+                    ))}
+
+                    {snippets
+                      .filter((snippet: any) => (snippet.tags || []).includes(`project:${proj}`))
+                      .filter((snippet: any) => !(projectFiles[proj] || []).some((file) => file.name === snippet.title))
+                      .map((snippet: any) => (
+                        <ProjectFile
+                          key={snippet._id}
+                          title={snippet.title}
+                          isSelected={selected === "ProjectFile" && selectedProject === proj}
+                          onCreateSnippet={() => onCreateSnippetForProject(proj, snippet.title)}
+                          onClick={() => {
+                            setSelectedProject(proj);
+                            onViewSnippet(snippet);
+                          }}
+                        />
+                      ))}
+
+                    {newItemContext?.projectName === proj && (
+                      <div className="flex items-center gap-2 px-2 py-1.5 mx-1 mt-1 border border-[#a78bfa] rounded-md bg-white dark:bg-[#09090b] shadow-sm">
+                        {newItemContext.type === "folder"
+                          ? <Folder className="h-3.5 w-3.5 text-[#a78bfa] shrink-0" />
+                          : <FileText className="h-3.5 w-3.5 text-[#a78bfa] shrink-0" />}
                         <input
                           autoFocus
                           value={newItemName}
                           onChange={(e) => setNewItemName(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleCreateItem();
-                            else if (e.key === 'Escape') {
+                            if (e.key === 'Enter') {
+                              addProjectItem(proj, newItemContext.type, newItemName);
+                              setNewItemContext(null);
                               setNewItemName("");
-                              setCreatingItemInProjectId(null);
-                              setCreatingItemType(null);
+                            } else if (e.key === 'Escape') {
+                              setNewItemContext(null);
+                              setNewItemName("");
                             }
                           }}
-                          onBlur={handleCreateItem}
+                          onBlur={() => {
+                            if (newItemName.trim()) {
+                              addProjectItem(proj, newItemContext.type, newItemName);
+                            }
+                            setNewItemContext(null);
+                            setNewItemName("");
+                          }}
                           className="bg-transparent text-[13px] outline-none w-full text-gray-900 dark:text-white"
-                          placeholder={`New ${creatingItemType}...`}
+                          placeholder={`New ${newItemContext.type}...`}
                         />
                       </div>
                     )}
 
-                    {(!proj.items || proj.items.length === 0) && creatingItemInProjectId !== proj.id && (
+                    {snippets.filter((snippet: any) => (snippet.tags || []).includes(`project:${proj}`)).length === 0 && (projectFiles[proj] || []).length === 0 && (projectFolders[proj] || []).length === 0 && (
                       <div className="py-1 px-3 text-[12px] text-gray-400 dark:text-gray-500 italic">Empty Project</div>
                     )}
                   </ProjectFolder>
@@ -724,7 +894,7 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                 )}
 
                 {/* Empty State */}
-                {projects.length === 0 && !isCreatingProject && (
+                {allProjects.length === 0 && !isCreatingProject && (
                   <div className="py-1 px-3 text-[13px] text-gray-400 dark:text-gray-500 italic">No projects yet</div>
                 )}
               </div>
@@ -737,9 +907,9 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                     <button
                       key={tag.name}
                       onClick={() => handleNavigate("Tag", tag.name)}
-                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 ${selected === "Tag" && selectedTag === tag.name
+                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 border ${selected === "Tag" && selectedTag === tag.name
                         ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-bold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
-                        : "text-gray-500 dark:text-[#71717a] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 hover:text-gray-900 dark:hover:text-gray-200 font-medium"
+                        : "text-gray-500 dark:text-[#71717a] hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 hover:text-gray-900 dark:hover:text-gray-200 font-medium border-transparent hover:border-gray-200/70 dark:hover:border-neutral-700/70"
                         }`}
                     >
                       <div className="flex items-center gap-3 w-full">
@@ -770,9 +940,9 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                     <button
                       key={lang.name}
                       onClick={() => handleNavigate("Language", lang.name)}
-                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 ${selected === "Language" && selectedLanguage === lang.name
+                      className={`group relative flex h-9 w-full items-center rounded-lg transition-all duration-300 px-3 border ${selected === "Language" && selectedLanguage === lang.name
                         ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-bold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
-                        : "text-gray-500 dark:text-[#71717a] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 hover:text-gray-900 dark:hover:text-gray-200 font-medium"
+                        : "text-gray-500 dark:text-[#71717a] hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 hover:text-gray-900 dark:hover:text-gray-200 font-medium border-transparent hover:border-gray-200/70 dark:hover:border-neutral-700/70"
                         }`}
                     >
                       <div className="flex items-center gap-3 w-full">
@@ -837,9 +1007,9 @@ const Option = ({ Icon, title, isSelected, onClick }: any) => {
   return (
     <button
       onClick={onClick}
-      className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-200 px-3.5 ${isSelected
-        ? "bg-gray-200/70 dark:bg-[#1e1e20] text-gray-900 dark:text-white font-semibold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
-        : "text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/50 dark:hover:bg-neutral-800/40 font-medium hover:text-gray-900 dark:hover:text-gray-200"
+      className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-200 px-3.5 border ${isSelected
+        ? "bg-gray-200/75 dark:bg-[#1e1e20] border-gray-300/60 dark:border-[#323238] text-gray-900 dark:text-white font-semibold shadow-[inset_0_1px_rgba(255,255,255,0.05)]"
+        : "border-transparent text-gray-600 dark:text-[#9ca3af] hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 hover:border-gray-200/80 dark:hover:border-neutral-700/70 font-medium hover:text-gray-900 dark:hover:text-gray-200"
         }`}
     >
       <div className="flex items-center gap-3.5">
@@ -876,7 +1046,7 @@ const CollapsibleGroup = ({ title, Icon, children, defaultExpanded = false }: an
   );
 };
 
-const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, onNewFolder, onDelete }: any) => {
+const ProjectFolder = ({ title, children, defaultExpanded = false, onAddFile, onAddFolder, onCreateSnippet }: any) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
   return (
     <div className="flex flex-col group">
@@ -890,21 +1060,15 @@ const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, on
           <span className="text-[14px] pt-[1px] font-medium">{title}</span>
         </button>
         <div className="hidden group-hover:flex items-center gap-1">
-          {onNewFile && (
-            <button onClick={(e) => { e.stopPropagation(); setExpanded(true); onNewFile(); }} className="p-1 hover:bg-gray-300 dark:hover:bg-neutral-700 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" title="New File">
-              <FilePlus className="h-3.5 w-3.5" />
-            </button>
-          )}
-          {onNewFolder && (
-            <button onClick={(e) => { e.stopPropagation(); setExpanded(true); onNewFolder(); }} className="p-1 hover:bg-gray-300 dark:hover:bg-neutral-700 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" title="New Folder">
-              <FolderPlus className="h-3.5 w-3.5" />
-            </button>
-          )}
-          {onDelete && (
-            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-red-200 dark:hover:bg-red-900/40 rounded text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Delete">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <button onClick={(e) => { e.stopPropagation(); onAddFile?.(); }} className="p-1 hover:bg-gray-300 dark:hover:bg-neutral-700 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" title="New File">
+            <FilePlus className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onAddFolder?.(); }} className="p-1 hover:bg-gray-300 dark:hover:bg-neutral-700 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" title="New Folder">
+            <FolderPlus className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onCreateSnippet?.(); }} className="p-1 hover:bg-gray-300 dark:hover:bg-neutral-700 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" title="Create Snippet">
+            <Plus className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
       {expanded && (
@@ -916,7 +1080,8 @@ const ProjectFolder = ({ title, children, defaultExpanded = false, onNewFile, on
   );
 };
 
-const ProjectFile = ({ title, Icon = FileText, isSelected, onClick, onDelete }: any) => {
+const ProjectFile = ({ title, Icon = FileText, isSelected, onClick, onCreateSnippet }: any) => {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="flex flex-col group relative">
       <button
@@ -931,30 +1096,62 @@ const ProjectFile = ({ title, Icon = FileText, isSelected, onClick, onDelete }: 
           <span className="text-[14px] pt-[1px]">{title}</span>
         </div>
       </button>
-      {onDelete && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="absolute right-2 top-1.5 hidden group-hover:flex p-1 hover:bg-red-200 dark:hover:bg-red-900/40 rounded text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-          title="Delete"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setMenuOpen((prev) => !prev);
+        }}
+        className="absolute right-2 top-1.5 hidden group-hover:flex p-1 rounded text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/60 dark:hover:bg-neutral-700/70 transition-colors"
+        title="File actions"
+      >
+        <MoreVertical className="h-3.5 w-3.5" />
+      </button>
+      {menuOpen && (
+        <div className="absolute right-2 top-8 z-20 w-36 rounded-lg border border-gray-200 dark:border-[#2b2b30] bg-white dark:bg-[#0f0f13] shadow-lg overflow-hidden">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen(false);
+              onCreateSnippet?.();
+            }}
+            className="w-full px-3 py-2 text-left text-[12px] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#18181f] flex items-center gap-2"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Create Snippet
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen(false);
+              onClick?.();
+            }}
+            className="w-full px-3 py-2 text-left text-[12px] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#18181f] flex items-center gap-2"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            See
+          </button>
+        </div>
       )}
     </div>
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLanguage, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery }: any) => {
+const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLanguage, isSidebarOpen, snippets = [], isLoading, onFavorite, onDelete, onEdit, onHistory, onRestore, onEmptyTrash, searchQuery, setSearchQuery, statsSource = [] }: any) => {
   const safeSnippets = Array.isArray(snippets) ? snippets : [];
 
   // Backend now handles filtering, so we just use safeSnippets directly
   const filteredSnippets = safeSnippets;
+  const totalSnippets = filteredSnippets.length;
+  const favoriteCount = filteredSnippets.filter((s: any) => s.isFavorite && !s.isDeleted).length;
+  const tagCount = new Set(
+    filteredSnippets.flatMap((s: any) => (s.tags || []).filter((tag: string) => !tag.startsWith("project:")))
+  ).size;
 
   return (
     <div className="flex-1 bg-white dark:bg-black flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className={`h-[4.5rem] flex items-center gap-4 border-b border-gray-100 dark:border-[#27272a] shrink-0 transition-all ${isSidebarOpen ? 'px-8' : 'pl-20 pr-8'}`}>
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           <h1 className="text-[22px] font-medium tracking-tight capitalize text-gray-900 dark:text-white">
             {selected === "Tag" ? (
               <div className="flex items-center gap-3">
@@ -968,6 +1165,11 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLang
               </div>
             ) : selected}
           </h1>
+          <div className="hidden md:flex items-center gap-2 min-w-0">
+            <span className="text-[12px] px-3 py-1 rounded-full border border-gray-200 dark:border-[#27272a] text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-[#121216]">{totalSnippets} snippets</span>
+            <span className="text-[12px] px-3 py-1 rounded-full border border-gray-200 dark:border-[#27272a] text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-[#121216]">{favoriteCount} favorites</span>
+            <span className="text-[12px] px-3 py-1 rounded-full border border-gray-200 dark:border-[#27272a] text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-[#121216]">{tagCount} tags</span>
+          </div>
         </div>
         <div className="flex items-center gap-5">
           {selected === "Trash" && snippets.some((s: any) => s.isDeleted) && (
@@ -1027,6 +1229,115 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLang
               No snippets found in <strong className="font-semibold text-gray-700 dark:text-gray-300 capitalize">{selected}</strong>.
             </p>
             <p className="text-gray-400 dark:text-[#52525b] text-[13px] mt-1">Try creating one or using a different search term.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SnippetDetailsView = ({ snippet, onBack }: any) => {
+  const project = (snippet.tags || []).find((tag: string) => tag.startsWith("project:"))?.replace("project:", "");
+  const normalTags = (snippet.tags || []).filter((tag: string) => !tag.startsWith("project:"));
+
+  return (
+    <div className="flex-1 overflow-auto p-6 md:p-8 bg-white dark:bg-black">
+      <div className="max-w-4xl mx-auto rounded-2xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#111113] shadow-sm">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-[#27272a]">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-[#8b919d]">Snippet Details</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-1">{snippet.title}</h2>
+          </div>
+          <button onClick={onBack} className="h-9 px-3 rounded-lg border border-gray-200 dark:border-[#27272a] text-sm hover:bg-gray-50 dark:hover:bg-[#1a1a1f] inline-flex items-center gap-2">
+            <X className="h-4 w-4" /> Close
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="rounded-xl border border-gray-200 dark:border-[#27272a] p-3"><span className="text-gray-500">Language</span><p className="font-medium mt-1">{snippet.language}</p></div>
+            <div className="rounded-xl border border-gray-200 dark:border-[#27272a] p-3"><span className="text-gray-500">Framework</span><p className="font-medium mt-1">{snippet.framework || "none"}</p></div>
+            <div className="rounded-xl border border-gray-200 dark:border-[#27272a] p-3"><span className="text-gray-500">Project</span><p className="font-medium mt-1">{project || "None"}</p></div>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Description</p>
+            <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{snippet.description || "No description provided."}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-2">Tags</p>
+            <div className="flex flex-wrap gap-2">
+              {normalTags.length > 0 ? normalTags.map((tag: string) => (
+                <span key={tag} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#17171a]">#{tag}</span>
+              )) : <span className="text-sm text-gray-500">No tags</span>}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-2">Code</p>
+            <pre className="rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#09090b] p-4 overflow-auto text-xs leading-6 text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{snippet.code}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectWorkspaceView = ({ snippets = [], onViewSnippet, onCreateSnippetForProject }: any) => {
+  const groupedProjects = snippets.reduce((acc: Record<string, any[]>, snippet: any) => {
+    const projectTag = (snippet.tags || []).find((tag: string) => tag.startsWith("project:"));
+    if (!projectTag) return acc;
+    const projectName = projectTag.replace("project:", "");
+    if (!acc[projectName]) acc[projectName] = [];
+    acc[projectName].push(snippet);
+    return acc;
+  }, {});
+
+  const projectNames = Object.keys(groupedProjects);
+
+  return (
+    <div className="flex-1 overflow-auto p-6 md:p-8 bg-white dark:bg-black">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Project Snippets</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Browse snippets by project with file paths and quick actions.</p>
+          </div>
+        </div>
+
+        {projectNames.length === 0 ? (
+          <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50/50 dark:bg-[#09090b]/50 p-8 text-center text-gray-500 dark:text-gray-400">
+            No project snippets yet.
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {projectNames.map((projectName) => (
+              <div key={projectName} className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#101014] overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100 dark:border-[#27272a] flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">Project</p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{projectName}</h3>
+                  </div>
+                  <button
+                    onClick={() => onCreateSnippetForProject(projectName)}
+                    className="h-9 px-3 rounded-lg border border-gray-200 dark:border-[#2b2b31] text-sm hover:bg-gray-50 dark:hover:bg-[#1a1a20]"
+                  >
+                    Create Snippet
+                  </button>
+                </div>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {groupedProjects[projectName].map((snippet: any) => (
+                    <button
+                      key={snippet._id}
+                      onClick={() => onViewSnippet(snippet)}
+                      className="text-left rounded-xl border border-gray-200 dark:border-[#2a2a30] bg-gray-50 dark:bg-[#0f0f14] p-4 hover:border-[#a78bfa]/40 transition-all"
+                    >
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{projectName}/{snippet.title}</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{snippet.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Language: {snippet.language || "unknown"}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{snippet.description || "No description provided."}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

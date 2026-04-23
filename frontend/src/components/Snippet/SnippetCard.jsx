@@ -14,7 +14,10 @@ import { motion } from 'framer-motion';
 
 const SnippetCard = ({ snippet, onFavorite, onDelete, onEdit, onHistory, onRestore, isDark, view }) => {
   const formattedDate = formatStandardDate(snippet.createdAt);
-  const tagCount = snippet.tags?.length || 0;
+  const projectTag = (snippet.tags || []).find((tag) => typeof tag === "string" && tag.startsWith("project:"));
+  const projectName = projectTag ? projectTag.replace("project:", "") : "";
+  const normalTags = (snippet.tags || []).filter((tag) => typeof tag === "string" && !tag.startsWith("project:"));
+  const tagCount = normalTags.length;
 
   return (
     <motion.div
@@ -154,9 +157,24 @@ const SnippetCard = ({ snippet, onFavorite, onDelete, onEdit, onHistory, onResto
         </div>
 
         {/* Tag badges */}
-        {tagCount > 0 && (
+        {(tagCount > 0 || projectName) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-            {snippet.tags.slice(0, 3).map((tag, i) => (
+            {projectName && (
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 11px',
+                borderRadius: '999px',
+                background: 'var(--sc-badge-bg)',
+                color: 'var(--sc-badge-icon)',
+                fontSize: '12px',
+                fontWeight: 700,
+                border: '1px solid var(--sc-tag-border)',
+              }}>
+                {projectName}
+              </span>
+            )}
+            {normalTags.slice(0, 3).map((tag, i) => (
               <span key={i} style={{
                 display: 'inline-flex',
                 alignItems: 'center',

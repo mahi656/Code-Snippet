@@ -48,14 +48,6 @@ const VISIBILITY_OPTIONS = [
   { value: "unlisted", label: "Unlisted (Anyone with link)" }
 ];
 
-const PROJECTS = [
-  { value: "none", label: "None" },
-  { value: "work", label: "Work" },
-  { value: "personal", label: "Personal" },
-  { value: "learning", label: "Learning" },
-  { value: "add_new", label: "+ Add New" }
-];
-
 const CustomDatePicker = ({ selectedDate, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(selectedDate ? new Date(selectedDate) : new Date());
@@ -170,13 +162,14 @@ const CustomDatePicker = ({ selectedDate, onChange }) => {
   );
 };
 
-export default function NewSnippet({ onSave, onCancel, existingSnippets = [], isEditing = false, snippet = null }) {
+export default function NewSnippet({ onSave, onCancel, existingSnippets = [], projects = [], initialProjectName = '', initialTitle = '', isEditing = false, snippet = null }) {
   //This part stores all the "live" data for our form
 
   // These three variables keep track of whether our dropdown menus are open or closed
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isFrameworkDropdownOpen, setIsFrameworkDropdownOpen] = useState(false);
   const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -192,6 +185,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
     framework: 'none',
     visibility: 'private',
     dependencies: '',
+    projectName: '',
     code: '// Start coding here...',
     tags: '',
     isFavorite: false,
@@ -211,6 +205,9 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
         framework: snippet.framework || 'none',
         visibility: snippet.visibility || 'private',
         dependencies: snippet.dependencies || '',
+        projectName: Array.isArray(snippet.tags)
+          ? (snippet.tags.find((tag) => typeof tag === "string" && tag.startsWith("project:")) || '').replace('project:', '')
+          : '',
         code: snippet.code || '',
         tags: Array.isArray(snippet.tags) ? snippet.tags.join(', ') : (snippet.tags || ''),
         isFavorite: !!snippet.isFavorite,
@@ -228,6 +225,7 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
         framework: 'none',
         visibility: 'private',
         dependencies: '',
+        projectName: '',
         code: '// Start coding here...',
         tags: '',
         isFavorite: false,
@@ -238,6 +236,15 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
       });
     }
   }, [isEditing, snippet]);
+
+  React.useEffect(() => {
+    if (isEditing) return;
+    setFormData(prev => ({
+      ...prev,
+      projectName: initialProjectName || prev.projectName,
+      title: initialTitle || prev.title,
+    }));
+  }, [initialProjectName, initialTitle, isEditing]);
 
   // This function updates our formData whenever a user types in a normal text box
   const handleChange = (e) => {
@@ -319,9 +326,15 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
         ...formData,
         title: title,
         code: formData.code || '',
-        tags: typeof formData.tags === 'string'
-          ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
-          : [],
+        tags: (() => {
+          const userTags = typeof formData.tags === 'string'
+            ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+            : [];
+          const cleanedTags = userTags.filter(tag => !tag.toLowerCase().startsWith("project:"));
+          return formData.projectName?.trim()
+            ? [...cleanedTags, `project:${formData.projectName.trim()}`]
+            : cleanedTags;
+        })(),
       };
 
       let response;
@@ -565,6 +578,55 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], is
                   placeholder="e.g. npm install lucide-react"
                   className="w-full h-[44px] rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-transparent pl-10 pr-4 text-[15px] text-gray-900 dark:text-white outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:focus:bg-transparent dark:autofill:shadow-[0_0_0_1000px_#09090b_inset] dark:autofill:[-webkit-text-fill-color:white] transition-all placeholder:text-gray-400 dark:placeholder:text-neutral-600"
                 />
+              </div>
+            </div>
+
+            {/* Project Selection */}
+            <div className="space-y-2 relative">
+              <label htmlFor="projectName" className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                Project <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+              </label>
+              <div className="relative shadow-sm rounded-xl">
+                <Folder className={`absolute left-3.5 top-[13px] h-[18px] w-[18px] transition-colors ${isProjectDropdownOpen ? 'text-[#a78bfa]' : 'text-[#71717a]'} pointer-events-none z-10`} />
+                <button
+                  type="button"
+                  onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                  className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:text-white transition-all text-left"
+                >
+                  <span className="truncate">{formData.projectName || 'No Project'}</span>
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isProjectDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isProjectDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsProjectDropdownOpen(false)}></div>
+                    <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#09090b] border border-gray-200 dark:border-[#27272a] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-h-[240px] overflow-y-auto py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, projectName: '' }));
+                          setIsProjectDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
+                      >
+                        No Project
+                      </button>
+                      {projects.map((projectName) => (
+                        <button
+                          key={projectName}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, projectName }));
+                            setIsProjectDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.projectName === projectName ? 'bg-[#a78bfa]/10 text-[#a78bfa] font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
+                        >
+                          {projectName}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
