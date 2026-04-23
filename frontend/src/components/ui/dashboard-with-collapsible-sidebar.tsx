@@ -38,6 +38,7 @@ import { toast } from "./Notification.jsx";
 import { getTagColor } from "../../utils/tag-lang-colors";
 import { formatFullDate } from "../../utils/dateUtils";
 import { capitalize } from "../../utils/stringUtils";
+import { ProjectWorkspaceView } from "./project-workspace-view.jsx";
 
 export const Example = () => {
   console.log("Dashboard (Example) Rendering...");
@@ -65,7 +66,6 @@ export const Example = () => {
   const location = useLocation();
 
   const handleNavigate = (view: string, subValue: string | null = null, shouldClear = true) => {
-    // If we're already on this tab and no sub-value changed, just refresh data without clearing UI
     const isSameView = selected === view &&
       (view === "Tag" ? selectedTag === subValue :
         view === "Language" ? selectedLanguage === subValue : true);
@@ -74,8 +74,6 @@ export const Example = () => {
       fetchSnippets(view, "", subValue || selectedTag, view === "Language" ? subValue : selectedLanguage);
       return;
     }
-
-    // Synchronize UI state immediately for instant feedback
     setSelected(view);
     if (view === "Tag") setSelectedTag(subValue);
     else if (view === "Language") setSelectedLanguage(subValue);
@@ -85,17 +83,12 @@ export const Example = () => {
       setSelectedLanguage(null);
       setSelectedProject(null);
     }
-
-    // Clear content only if requested (standard navigation)
-    // We skip clearing on save to ensure the newly saved item is visible immediately
     if (shouldClear) {
       setGlobalSnippets([]);
       setSearchQuery("");
       setIsLoading(true);
       setEditingSnippet(null);
     }
-
-    // Update URL
     if (view === "All Snippets") navigate("/dashboard");
     else if (view === "Favorites") navigate("/dashboard/favorites");
     else if (view === "Trash") navigate("/dashboard/trash");
@@ -167,6 +160,35 @@ export const Example = () => {
   const fetchSnippets = async (tab = selected, query = searchQuery, tag = selectedTag, lang = selectedLanguage) => {
     const token = localStorage.getItem('token');
     if (!token) return;
+
+    const localFilter = () => {
+      let snippets = [...allSnippets];
+      if (tab === "Trash") snippets = snippets.filter((s: any) => s.isDeleted);
+      else snippets = snippets.filter((s: any) => !s.isDeleted);
+
+      if (tab === "Favorites") snippets = snippets.filter((s: any) => s.isFavorite);
+      if (tab === "Tag" && tag) snippets = snippets.filter((s: any) => (s.tags || []).includes(tag));
+      if (tab === "Language" && lang) snippets = snippets.filter((s: any) => (s.language || "").toLowerCase() === (lang || "").toLowerCase());
+      if (tab === "Projects") snippets = snippets.filter((s: any) => (s.tags || []).some((t: string) => typeof t === "string" && t.startsWith("project:")));
+
+      if (query.trim()) {
+        const q = query.trim().toLowerCase();
+        snippets = snippets.filter((s: any) =>
+          (s.title || "").toLowerCase().includes(q) ||
+          (s.description || "").toLowerCase().includes(q) ||
+          (s.code || "").toLowerCase().includes(q) ||
+          (s.language || "").toLowerCase().includes(q) ||
+          (s.tags || []).some((t: string) => (t || "").toLowerCase().includes(q))
+        );
+      }
+      return snippets;
+    };
+
+    if (allSnippets.length) {
+      setGlobalSnippets(localFilter());
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -248,28 +270,23 @@ export const Example = () => {
   useEffect(() => {
     if (!allSnippets.length) return;
 
-    if (!tags.length) {
-      const tagMap: Record<string, number> = {};
-      allSnippets.forEach((snippet: any) => {
-        (snippet.tags || [])
-          .filter((tag: string) => typeof tag === "string" && !tag.startsWith("project:"))
-          .forEach((tag: string) => {
-            tagMap[tag] = (tagMap[tag] || 0) + 1;
-          });
-      });
-      setTags(Object.entries(tagMap).map(([name, snippetCount]) => ({ name, snippetCount })));
-    }
+    const tagMap: Record<string, number> = {};
+    allSnippets.forEach((snippet: any) => {
+      (snippet.tags || [])
+        .filter((tag: string) => typeof tag === "string")
+        .forEach((tag: string) => {
+          tagMap[tag] = (tagMap[tag] || 0) + 1;
+        });
+    });
+    setTags(Object.entries(tagMap).map(([name, snippetCount]) => ({ name, snippetCount })));
 
-    if (!languages.length) {
-      const langMap: Record<string, number> = {};
-      allSnippets.forEach((snippet: any) => {
-        if (!snippet.language) return;
-        langMap[snippet.language] = (langMap[snippet.language] || 0) + 1;
-      });
-      setLanguages(Object.entries(langMap).map(([name, snippetCount]) => ({ name, snippetCount })));
-    }
-  }, [allSnippets, tags.length, languages.length]);
-  // This prevents race conditions when switching between languages or searching
+    const langMap: Record<string, number> = {};
+    allSnippets.forEach((snippet: any) => {
+      if (!snippet.language) return;
+      langMap[snippet.language] = (langMap[snippet.language] || 0) + 1;
+    });
+    setLanguages(Object.entries(langMap).map(([name, snippetCount]) => ({ name, snippetCount })));
+  }, [allSnippets]);
   useEffect(() => {
     const handler = setTimeout(() => {
       if (["All Snippets", "Favorites", "Trash", "Tag", "Language", "Projects"].includes(selected)) {
@@ -382,11 +399,6 @@ export const Example = () => {
       document.documentElement.classList.remove("dark");
     }
   }, [isDark]);
-
-  // Navigation and search fetching is now consolidated in a single debounced effect above
-
-  // Optimized Auth Guard & Token Capture
-  // Runs once on mount to handle GitHub redirects or check legacy tokens
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
@@ -404,7 +416,7 @@ export const Example = () => {
     if (!storedToken) {
       navigate('/login', { replace: true });
     }
-  }, [navigate]); // Removed 'location' to prevent re-running on every tab switch
+  }, [navigate]); 
 
   // Recover editing state from URL on refresh
   useEffect(() => {
@@ -500,15 +512,18 @@ export const Example = () => {
         ) : selected === "Projects" ? (
           <ProjectWorkspaceView
             snippets={allSnippets}
-            onViewSnippet={(snippet: any) => {
-              setViewingSnippet(snippet);
-              setSelected("ProjectFile");
-            }}
             onCreateSnippetForProject={(projectName: string, fileName?: string) => {
               setDraftProjectName(projectName);
               setDraftFileName(fileName || "");
               handleNavigate("New Snippet");
             }}
+            onFavorite={handleToggleFavorite}
+            onDelete={handleDeleteSnippet}
+            onEdit={(snippet: any) => {
+              setEditingSnippet(snippet);
+              navigate(`/dashboard/edit/${snippet._id}`);
+            }}
+            onHistory={(id: string) => setVersionSnippetId(id)}
           />
         ) : selected === "ProjectFile" && viewingSnippet ? (
           <SnippetDetailsView
@@ -917,7 +932,7 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                           className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
                           style={{ backgroundColor: getTagColor(tag.name) }}
                         />
-                        <span className="text-[14px] truncate flex-1 text-left">{tag.name}</span>
+                        <span className="text-[14px] truncate flex-1 text-left">{tag.name.startsWith("project:") ? tag.name.replace("project:", "") : tag.name}</span>
                         <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md ${selected === "Tag" && selectedTag === tag.name
                           ? "bg-gray-900/10 dark:bg-white/10 text-gray-700 dark:text-gray-300"
                           : "bg-gray-500/10 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
@@ -1275,71 +1290,6 @@ const SnippetDetailsView = ({ snippet, onBack }: any) => {
             <pre className="rounded-xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#09090b] p-4 overflow-auto text-xs leading-6 text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{snippet.code}</pre>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
-
-const ProjectWorkspaceView = ({ snippets = [], onViewSnippet, onCreateSnippetForProject }: any) => {
-  const groupedProjects = snippets.reduce((acc: Record<string, any[]>, snippet: any) => {
-    const projectTag = (snippet.tags || []).find((tag: string) => tag.startsWith("project:"));
-    if (!projectTag) return acc;
-    const projectName = projectTag.replace("project:", "");
-    if (!acc[projectName]) acc[projectName] = [];
-    acc[projectName].push(snippet);
-    return acc;
-  }, {});
-
-  const projectNames = Object.keys(groupedProjects);
-
-  return (
-    <div className="flex-1 overflow-auto p-6 md:p-8 bg-white dark:bg-black">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Project Snippets</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Browse snippets by project with file paths and quick actions.</p>
-          </div>
-        </div>
-
-        {projectNames.length === 0 ? (
-          <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50/50 dark:bg-[#09090b]/50 p-8 text-center text-gray-500 dark:text-gray-400">
-            No project snippets yet.
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {projectNames.map((projectName) => (
-              <div key={projectName} className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#101014] overflow-hidden">
-                <div className="px-5 py-3 border-b border-gray-100 dark:border-[#27272a] flex items-center justify-between">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">Project</p>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{projectName}</h3>
-                  </div>
-                  <button
-                    onClick={() => onCreateSnippetForProject(projectName)}
-                    className="h-9 px-3 rounded-lg border border-gray-200 dark:border-[#2b2b31] text-sm hover:bg-gray-50 dark:hover:bg-[#1a1a20]"
-                  >
-                    Create Snippet
-                  </button>
-                </div>
-                <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {groupedProjects[projectName].map((snippet: any) => (
-                    <button
-                      key={snippet._id}
-                      onClick={() => onViewSnippet(snippet)}
-                      className="text-left rounded-xl border border-gray-200 dark:border-[#2a2a30] bg-gray-50 dark:bg-[#0f0f14] p-4 hover:border-[#a78bfa]/40 transition-all"
-                    >
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{projectName}/{snippet.title}</p>
-                      <p className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{snippet.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Language: {snippet.language || "unknown"}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{snippet.description || "No description provided."}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

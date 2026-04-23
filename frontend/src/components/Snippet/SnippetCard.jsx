@@ -16,8 +16,12 @@ const SnippetCard = ({ snippet, onFavorite, onDelete, onEdit, onHistory, onResto
   const formattedDate = formatStandardDate(snippet.createdAt);
   const projectTag = (snippet.tags || []).find((tag) => typeof tag === "string" && tag.startsWith("project:"));
   const projectName = projectTag ? projectTag.replace("project:", "") : "";
-  const normalTags = (snippet.tags || []).filter((tag) => typeof tag === "string" && !tag.startsWith("project:"));
-  const tagCount = normalTags.length;
+  const displayTags = [
+    ...(projectName ? [projectName] : []),
+    ...(snippet.tags || [])
+      .filter((tag) => typeof tag === "string" && !tag.startsWith("project:"))
+  ];
+  const tagCount = displayTags.length;
 
   return (
     <motion.div
@@ -159,22 +163,7 @@ const SnippetCard = ({ snippet, onFavorite, onDelete, onEdit, onHistory, onResto
         {/* Tag badges */}
         {(tagCount > 0 || projectName) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-            {projectName && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '4px 11px',
-                borderRadius: '999px',
-                background: 'var(--sc-badge-bg)',
-                color: 'var(--sc-badge-icon)',
-                fontSize: '12px',
-                fontWeight: 700,
-                border: '1px solid var(--sc-tag-border)',
-              }}>
-                {projectName}
-              </span>
-            )}
-            {normalTags.slice(0, 3).map((tag, i) => (
+            {displayTags.slice(0, 3).map((tag, i) => (
               <span key={i} style={{
                 display: 'inline-flex',
                 alignItems: 'center',
