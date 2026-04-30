@@ -56,11 +56,16 @@ Calendar & activity flow
       |-- Dynamic analytics (Monthly Total, Active Days, Peak Day) derived from milestones
       |-- Render daily milestones + activity insights
 
-Organization & Aesthetics
+Sharing flow
       |
-      |-- Professional AI-inspired design (Midnight Blue & Slate)
-      |-- Project-specific snippet distinction with subtle accents
-      |-- Segmented card layout for high readability
+      |-- Generate share link for snippet
+      |-- Access public snippet by secure token
+      |-- Deactivate share link when no longer needed
+
+Dashboard analytics
+      |
+      |-- Aggregate user snippet stats
+      |-- Provide high-level workspace insights
 ```
 
 ## Tech Stack
@@ -69,10 +74,11 @@ Organization & Aesthetics
 | Area | Technology |
 |---|---|
 | Language | TypeScript |
-| Framework | NestJS / Express.js |
+| Framework | Express.js |
 | Database | MongoDB + Mongoose |
 | Authentication | JWT + bcrypt + GitHub OAuth |
 | File uploads | Multer |
+| Runtime tooling | ts-node-dev |
 
 ### Frontend
 | Area | Technology |

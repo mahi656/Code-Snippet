@@ -16,6 +16,7 @@ import TrashRoutes from './Trash/trash.route';
 import DashboardRoutes from './Dashboard/dashboard.route';
 import UploadRoutes from './Upload/upload.route';
 import SharedRoutes from './Shared/share.route';
+import ProjectRoutes from './Project/project.routes';
 import { errorMiddleware } from './middlewares/error.middleware';
 
 dotenv.config();
@@ -84,6 +85,7 @@ class App {
         this.app.use('/api/dashboard', DashboardRoutes);
         this.app.use('/api/upload', UploadRoutes);
         this.app.use('/api/shared', SharedRoutes);
+        this.app.use('/api/projects', ProjectRoutes);
     }
 
     private initializeErrorHandling(): void {

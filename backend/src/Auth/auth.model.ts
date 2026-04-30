@@ -10,6 +10,11 @@ export interface IUser extends Document {
     bio?: string;
     followers?: number;
     public_repos?: number;
+    projects: {
+        name: string;
+        files: { id: number; name: string }[];
+        folders: { id: number; name: string }[];
+    }[];
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -23,7 +28,12 @@ const UserSchema: Schema = new Schema({
     avatar_url: { type: String },
     bio: { type: String },
     followers: { type: Number },
-    public_repos: { type: Number }
+    public_repos: { type: Number },
+    projects: [{
+        name: { type: String, required: true },
+        files: [{ id: Number, name: String }],
+        folders: [{ id: Number, name: String }]
+    }]
 }, { timestamps: true });
 
 export default mongoose.model<IUser>('User', UserSchema);

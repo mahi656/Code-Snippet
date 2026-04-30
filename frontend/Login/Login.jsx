@@ -34,6 +34,7 @@ export const Login = () => {
         toast('Logged in successfully!', 'success');
         localStorage.setItem('token', response.data.data.token);
         localStorage.setItem('username', response.data.data.user.username);
+        localStorage.setItem('fullName', response.data.data.user.fullName || '');
 
         // Allow user to see the success toast before navigating
         setTimeout(() => {

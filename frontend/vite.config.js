@@ -14,9 +14,8 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    host: true,
     proxy: {
-      '/OAuth': 'https://code-snippet-jb3k.onrender.com',
+      '/OAuth': 'http://localhost:5001',
     },
   },
   resolve: {

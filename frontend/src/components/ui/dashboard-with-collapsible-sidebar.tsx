@@ -403,10 +403,12 @@ export const Example = () => {
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
     const urlUsername = params.get('username');
+    const urlFullName = params.get('fullName');
 
     if (urlToken) {
       localStorage.setItem('token', urlToken);
       if (urlUsername) localStorage.setItem('username', urlUsername);
+      if (urlFullName) localStorage.setItem('fullName', urlFullName);
       // Clean URL, this will trigger the 'location' sync effect but not an immediate fetch
       navigate('/dashboard', { replace: true });
       return;
@@ -623,8 +625,10 @@ export const Example = () => {
 };
 
 const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setIsSidebarOpen, tags, selectedTag, setSelectedTag, languages, selectedLanguage, setSelectedLanguage, selectedProject, setSelectedProject, snippets = [], onViewSnippet, onCreateSnippetForProject, handleNavigate }: any) => {
+  const fullName = localStorage.getItem('fullName');
   const username = localStorage.getItem('username') || "User";
-  const userInitial = username.charAt(0).toUpperCase();
+  const displayName = fullName || username;
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   const [projects, setProjects] = useState<string[]>([]);
   const [projectFiles, setProjectFiles] = useState<Record<string, { id: number; name: string }[]>>({});
@@ -635,39 +639,48 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
   const [newItemName, setNewItemName] = useState("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("dashboard.projects");
-    if (!stored) return;
+    const fetchProjects = async () => {
+      try {
+        const response = await api.get('/api/projects');
+        if (response.data && response.data.success) {
+          const consolidated = response.data.data || [];
+          setProjects(consolidated.map((p: any) => p.name));
+          
+          const filesMap: Record<string, any[]> = {};
+          const foldersMap: Record<string, any[]> = {};
+          consolidated.forEach((p: any) => {
+            filesMap[p.name] = p.files || [];
+            foldersMap[p.name] = p.folders || [];
+          });
+          setProjectFiles(filesMap);
+          setProjectFolders(foldersMap);
+        }
+      } catch (err) {
+        console.error("Failed to fetch projects:", err);
+      }
+    };
+    fetchProjects();
+  }, [username]);
+
+  const syncProjects = async (pList: string[], fMap: any, folMap: any) => {
     try {
-      setProjects(JSON.parse(stored));
-    } catch {
-      setProjects([]);
+      const consolidated = pList.map(name => ({
+        name,
+        files: fMap[name] || [],
+        folders: folMap[name] || []
+      }));
+      await api.put('/api/projects', { projects: consolidated });
+    } catch (err) {
+      console.error("Failed to sync projects:", err);
     }
-
-    const storedFiles = localStorage.getItem("dashboard.projectFiles");
-    if (storedFiles) {
-      try {
-        setProjectFiles(JSON.parse(storedFiles));
-      } catch {
-        setProjectFiles({});
-      }
-    }
-
-    const storedFolders = localStorage.getItem("dashboard.projectFolders");
-    if (storedFolders) {
-      try {
-        setProjectFolders(JSON.parse(storedFolders));
-      } catch {
-        setProjectFolders({});
-      }
-    }
-  }, []);
+  };
 
   const handleCreateProject = () => {
     const normalized = newProjectName.trim();
     if (normalized && !projects.includes(normalized)) {
       const next = [...projects, normalized];
       setProjects(next);
-      localStorage.setItem("dashboard.projects", JSON.stringify(next));
+      syncProjects(next, projectFiles, projectFolders);
     }
     setNewProjectName("");
     setIsCreatingProject(false);
@@ -687,21 +700,21 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
     if (!trimmed) return;
 
     if (type === "folder") {
-      const next = {
+      const nextFolders = {
         ...projectFolders,
         [projectName]: [...(projectFolders[projectName] || []), { id: Date.now(), name: trimmed }]
       };
-      setProjectFolders(next);
-      localStorage.setItem("dashboard.projectFolders", JSON.stringify(next));
+      setProjectFolders(nextFolders);
+      syncProjects(projects, projectFiles, nextFolders);
       return;
     }
 
-    const next = {
+    const nextFiles = {
       ...projectFiles,
       [projectName]: [...(projectFiles[projectName] || []), { id: Date.now(), name: trimmed }]
     };
-    setProjectFiles(next);
-    localStorage.setItem("dashboard.projectFiles", JSON.stringify(next));
+    setProjectFiles(nextFiles);
+    syncProjects(projects, nextFiles, projectFolders);
   };
 
   return (
@@ -1003,7 +1016,7 @@ const Sidebar = ({ selected, setSelected, isDark, setIsDark, isSidebarOpen, setI
                 </div>
                 <div className="flex flex-col justify-center gap-0.5">
                   <span className="text-[14px] font-semibold text-gray-900 dark:text-gray-100 tracking-tight leading-none">
-                    {username}
+                    {displayName}
                   </span>
                   <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-none">
                     My Profile

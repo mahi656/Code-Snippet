@@ -49,15 +49,26 @@ class GithubAuthRoutes {
             const userData = userResponse.data;
 
             let user = await User.findOne({ githubId: userData.id.toString() });
+            
             if (!user) {
                 user = new User({
                     githubId: userData.id.toString(),
                     username: userData.login,
+                    fullName: userData.name || userData.login,
                     avatar_url: userData.avatar_url,
                     bio: userData.bio,
                     followers: userData.followers,
                     public_repos: userData.public_repos
                 });
+                await user.save();
+            } else {
+                // Update user info from GitHub in case it changed
+                user.username = userData.login;
+                user.fullName = userData.name || user.fullName || userData.login;
+                user.avatar_url = userData.avatar_url;
+                user.bio = userData.bio;
+                user.followers = userData.followers;
+                user.public_repos = userData.public_repos;
                 await user.save();
             }
 
@@ -74,7 +85,12 @@ class GithubAuthRoutes {
             const clientUrl = this.normalizeUrl(
                 process.env.FRONTEND_URL || `http://${req.get('host')?.split(':')[0]}:5173`
             );
-            res.redirect(`${clientUrl}/dashboard?token=${jwtToken}&username=${encodeURIComponent(user.username)}`);
+            const redirectParams = new URLSearchParams({
+                token: jwtToken,
+                username: user.username,
+                fullName: user.fullName || ''
+            });
+            res.redirect(`${clientUrl}/dashboard?${redirectParams.toString()}`);
         } catch (err: any) {
             console.error('OAuth Error:', err.message);
             const clientUrl = this.normalizeUrl(

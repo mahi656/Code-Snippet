@@ -40,11 +40,9 @@ The system provides a **Git-like version control** mechanism, **productivity mil
 *   **Visibility Control**: Toggle between Public, Private, and Unlisted modes.
 *   **Attachments**: Attach relevant design docs or screenshots directly to snippets.
 
-### 3. Productivity Dashboard (Milestones)
-*   **Milestone-Driven Analytics**: Track project milestones on an interactive calendar with strict data integrity.
-*   **Dynamic Insights**: "Peak Day", "Monthly Total", and "Active Days" calculated strictly from user-defined milestones.
-*   **Visual Roadmap**: Heatmaps and activity indicators based on milestone completion frequency.
-*   **Contextual Links**: Link milestones directly to snippets for a unified project timeline.
+### 3. Productivity Calendar (Milestones)
+*   **Visual Roadmap**: Track project milestones on an interactive calendar.
+*   **Task Integration**: Link milestones directly to existing code snippets.
 
 ### 4. Search & Workflow
 *   **Instant Search**: Debounced, backend-integrated search across all fields.
