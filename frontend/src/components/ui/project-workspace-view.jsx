@@ -35,33 +35,28 @@ export const ProjectWorkspaceView = ({
             No project snippets yet.
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-12">
             {projectNames.map((projectName) => (
-              <div key={projectName} className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#101014] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.3)]">
-                <div className="px-5 py-3 border-b border-gray-100 dark:border-[#27272a] flex items-center justify-between bg-gray-50/70 dark:bg-[#13131a]">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400">Project</p>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{projectName}</h3>
+              <div key={projectName} className="space-y-5">
+                <div className="flex items-center gap-4">
+                  <div className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-[#1e1e24] border border-gray-200 dark:border-[#27272a]">
+                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100 tracking-wide">{projectName}</span>
                   </div>
+                  <div className="h-[1px] flex-1 bg-gray-200 dark:bg-[#27272a]"></div>
                 </div>
-                <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {(groupedProjects[projectName] || []).map((snippet) => (
-                    <div key={snippet._id} className="space-y-2">
-                      <div className="px-1">
-                        <p className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Path</p>
-                        <p className="text-[12px] text-gray-600 dark:text-gray-300 truncate">{projectName}/{snippet.title}</p>
-                      </div>
-                      <SnippetCard
-                        snippet={snippet}
-                        view="Projects"
-                        isDark={true}
-                        onFavorite={onFavorite}
-                        onDelete={onDelete}
-                        onEdit={onEdit}
-                        onHistory={onHistory}
-                        onRestore={() => {}}
-                      />
-                    </div>
+                    <SnippetCard
+                      key={snippet._id}
+                      snippet={snippet}
+                      view="Projects"
+                      isDark={true}
+                      onFavorite={onFavorite}
+                      onDelete={onDelete}
+                      onEdit={onEdit}
+                      onHistory={onHistory}
+                      onRestore={() => {}}
+                    />
                   ))}
                 </div>
               </div>

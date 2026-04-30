@@ -95,19 +95,17 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
     setSelectedDay(today)
   }
 
-  const getActivityLevel = (dateStr: string) => {
-    const count = activity[dateStr] || 0
+  const getActivityLevel = (day: Date) => {
+    const count = events.filter(e => isSameDay(new Date(e.date), day)).length
     if (count === 0) return 0
-    if (count < 3) return 1
-    if (count < 6) return 2
-    if (count < 10) return 3
+    if (count < 2) return 1
+    if (count < 4) return 2
+    if (count < 6) return 3
     return 4
   }
 
   const selectedDayEvents = events.filter(e => isSameDay(new Date(e.date), selectedDay))
-  const selectedDayKey = format(selectedDay, "yyyy-MM-dd")
-  const selectedDayActivity = activity[selectedDayKey] || 0
-  const effectiveSelectedActivity = selectedDayActivity > 0 ? selectedDayActivity : selectedDayEvents.length
+  const effectiveSelectedActivity = selectedDayEvents.length
   const totalMilestonesTillNow = events.filter(event => new Date(event.date) <= today).length
   const monthEvents = events
     .filter(event => isSameMonth(new Date(event.date), firstDayCurrentMonth))
@@ -127,8 +125,10 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
     let peakCount = 0
 
     monthDays.forEach((day) => {
-      const dayKey = format(day, "yyyy-MM-dd")
-      const dayCount = activity[dayKey] || 0
+      if (day > today) return
+
+      const dayEvents = events.filter(e => isSameDay(new Date(e.date), day))
+      const dayCount = dayEvents.length
 
       totalMonthActivity += dayCount
 
@@ -140,7 +140,7 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
         currentStreak = 0
       }
 
-      if (dayCount > peakCount) {
+      if (dayCount >= peakCount && dayCount > 0) {
         peakCount = dayCount
         peakDay = day
       }
@@ -154,10 +154,12 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
     })
 
     const recentCount = recentWindow.reduce((sum, day) => {
-      return sum + (activity[format(day, "yyyy-MM-dd")] || 0)
+      const dayEvents = events.filter(e => isSameDay(new Date(e.date), day))
+      return sum + dayEvents.length
     }, 0)
     const priorCount = priorWindow.reduce((sum, day) => {
-      return sum + (activity[format(day, "yyyy-MM-dd")] || 0)
+      const dayEvents = events.filter(e => isSameDay(new Date(e.date), day))
+      return sum + dayEvents.length
     }, 0)
 
     const trendDelta = recentCount - priorCount
@@ -171,7 +173,7 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
       trendDelta,
       recentCount,
     }
-  }, [activity, firstDayCurrentMonth, selectedDay])
+  }, [events, firstDayCurrentMonth, selectedDay, today.getTime()])
 
   const statusLabel = effectiveSelectedActivity >= 10
     ? "Peak Flow"
@@ -231,7 +233,7 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
                 </div>
               </div>
             </div>
-            </div>
+          </div>
 
           <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-neutral-900 border-none">
             <div className="grid grid-cols-7 border-b border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-950 text-center text-xs uppercase tracking-wider font-semibold leading-6 text-gray-500 dark:text-gray-400 py-1.5 flex-none font-bold">
@@ -241,8 +243,7 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
             <div className="flex flex-1 overflow-hidden bg-gray-200 dark:bg-neutral-800">
               <div className="w-full grid grid-cols-7 auto-rows-[minmax(100px,1fr)] gap-px bg-gray-200 dark:bg-neutral-800 overflow-y-auto">
                 {days.map((day, dayIdx) => {
-                  const dateStr = format(day, "yyyy-MM-dd")
-                  const level = getActivityLevel(dateStr)
+                  const level = getActivityLevel(day)
                   const dayEvents = events.filter(e => isSameDay(new Date(e.date), day))
 
                   return (
@@ -350,51 +351,60 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
                   )} />
 
                   <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={cn(
-                        "h-1.5 w-1.5 rounded-full",
-                        effectiveSelectedActivity >= 10 ? "bg-emerald-500 animate-pulse" :
-                          effectiveSelectedActivity >= 5 ? "bg-emerald-400" :
-                            effectiveSelectedActivity > 0 ? "bg-emerald-300" : "bg-gray-400"
-                      )} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                        {statusLabel}
+                    <div className="flex items-center justify-between mb-4 gap-4">
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className={cn(
+                          "h-2 w-2 rounded-full",
+                          effectiveSelectedActivity >= 10 ? "bg-emerald-500 animate-pulse" :
+                            effectiveSelectedActivity >= 5 ? "bg-emerald-400" :
+                              effectiveSelectedActivity > 0 ? "bg-emerald-300" : "bg-gray-400"
+                        )} />
+                        <span className="text-xs font-bold tracking-wide text-gray-700 dark:text-gray-300 uppercase">
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 text-right leading-tight max-w-[120px]">
+                        {trendMessage}
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed font-bold">
-                      {`Total milestones till now: ${totalMilestonesTillNow}.`}
-                    </p>
-                    <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed font-semibold">
-                      {monthEvents.length > 0
-                        ? `Calendar History: ${monthEvents.length} ${monthEvents.length === 1 ? "milestone" : "milestones"} saved this month. Latest: ${format(new Date(latestMonthEvent.date), "MMM d, yyyy")} - ${latestMonthEvent.title}.`
-                        : "Calendar History: No milestones saved in this month yet."}
-                    </p>
-                    <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed font-semibold">
-                      {trendMessage}
-                    </p>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Monthly Total</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{calendarInsights.totalMonthActivity}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 p-3 flex flex-col justify-between">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Monthly Total</p>
+                        <p className="text-xl font-black text-gray-900 dark:text-gray-100">{calendarInsights.totalMonthActivity}</p>
                       </div>
-                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Active Days</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{calendarInsights.activeDays}</p>
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 p-3 flex flex-col justify-between">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Active Days</p>
+                        <p className="text-xl font-black text-gray-900 dark:text-gray-100">{calendarInsights.activeDays}</p>
                       </div>
-                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Best Streak</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                          {calendarInsights.longestStreak} {calendarInsights.longestStreak === 1 ? "day" : "days"}
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 p-3 flex flex-col justify-between">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Best Streak</p>
+                        <p className="text-xl font-black text-gray-900 dark:text-gray-100">
+                          {calendarInsights.longestStreak} <span className="text-xs font-medium text-gray-500">days</span>
                         </p>
                       </div>
-                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-black">Peak Day</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                          {calendarInsights.peakDay ? `${format(calendarInsights.peakDay, "MMM d")} (${calendarInsights.peakCount})` : "No data"}
-                        </p>
+                      <div className="rounded-xl border border-gray-100 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 p-3 flex flex-col justify-between">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Peak Day</p>
+                        <div className="flex items-baseline gap-1">
+                          <p className="text-xl font-black text-gray-900 dark:text-gray-100">
+                            {calendarInsights.peakCount}
+                          </p>
+                          <p className="text-xs font-medium text-gray-500">
+                            {calendarInsights.peakDay && calendarInsights.peakCount > 0 ? `on ${format(calendarInsights.peakDay, "MMM d")}` : ""}
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+                    {latestMonthEvent && (
+                      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-neutral-800 flex items-start gap-3">
+                        <div className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-0.5">Latest Milestone</p>
+                          <p className="text-xs text-gray-700 dark:text-gray-300 font-medium line-clamp-1" title={latestMonthEvent.title}>{latestMonthEvent.title}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -403,15 +413,13 @@ export function FullScreenCalendar({ isDark, setIsDark }: FullScreenCalendarProp
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl group border-none ${
-              isDark 
-                ? "bg-[#d6c7b0] text-black hover:bg-[#c5b4a0]" 
-                : "bg-[#8a7a66] text-white hover:bg-[#7a6a56] shadow-neutral-200/50"
-            }`}
+            className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl group border-none ${isDark
+              ? "bg-[#d6c7b0] text-black hover:bg-[#c5b4a0]"
+              : "bg-[#8a7a66] text-white hover:bg-[#7a6a56] shadow-neutral-200/50"
+              }`}
           >
-            <div className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
-              isDark ? "bg-black/10 group-hover:bg-black/20" : "bg-white/10 group-hover:bg-white/20"
-            }`}>
+            <div className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-black/10 group-hover:bg-black/20" : "bg-white/10 group-hover:bg-white/20"
+              }`}>
               <PlusCircleIcon size={18} className="stroke-[2.5]" />
             </div>
             <span className="font-bold text-sm tracking-tight">Schedule Milestone</span>

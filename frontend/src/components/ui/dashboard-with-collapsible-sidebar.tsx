@@ -416,7 +416,7 @@ export const Example = () => {
     if (!storedToken) {
       navigate('/login', { replace: true });
     }
-  }, [navigate]); 
+  }, [navigate]);
 
   // Recover editing state from URL on refresh
   useEffect(() => {
@@ -1180,10 +1180,16 @@ const ExampleContent = ({ isDark, setIsDark, selected, selectedTag, selectedLang
               </div>
             ) : selected}
           </h1>
-          <div className="hidden md:flex items-center gap-2 min-w-0">
-            <span className="text-[12px] px-3 py-1 rounded-full border border-gray-200 dark:border-[#27272a] text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-[#121216]">{totalSnippets} snippets</span>
-            <span className="text-[12px] px-3 py-1 rounded-full border border-gray-200 dark:border-[#27272a] text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-[#121216]">{favoriteCount} favorites</span>
-            <span className="text-[12px] px-3 py-1 rounded-full border border-gray-200 dark:border-[#27272a] text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-[#121216]">{tagCount} tags</span>
+          <div className="hidden md:flex items-center gap-3 min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full border border-blue-200/40 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-500/10 backdrop-blur-sm shadow-sm">
+              {totalSnippets} snippets
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full border border-rose-200/40 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-500/10 backdrop-blur-sm shadow-sm">
+              {favoriteCount} favorites
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full border border-emerald-200/40 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-500/10 backdrop-blur-sm shadow-sm">
+              {tagCount} tags
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-5">

@@ -186,58 +186,91 @@ body {
    Light mode
 ═══════════════════════════════════════════════ */
 :root {
-  /* single unified card surface */
+  /* Modern minimalist surface */
   --sc-bg: #ffffff;
-  --sc-border: #e5e5e8;
-  --sc-divider: #e5e5e8;
+  --sc-border: rgba(0, 0, 0, 0.08);
+  --sc-divider: rgba(0, 0, 0, 0.04);
   --sc-body-bg: #ffffff;
-  --sc-strip-bg: #ffffff;
-  --sc-label: #111111;
-  --sc-title: #0d0d0d;
-  --sc-meta: #9ca3af;
-  --sc-badge-bg: #ede9fe;
-  --sc-badge-icon: #7c3aed;
+  --sc-strip-bg: #f9fafb;
+  --sc-label: #374151;
+  --sc-title: #111827;
+  --sc-meta: #6b7280;
+  --sc-badge-bg: #f3f4f6;
+  --sc-badge-icon: #4b5563;
   --sc-tag-bg: #f3f4f6;
-  --sc-tag-text: #374151;
-  --sc-tag-border: #e5e7eb;
-  --sc-cta-bg: #111111;
+  --sc-tag-text: #4b5563;
+  --sc-tag-border: transparent;
+  --sc-cta-bg: #111827;
   --sc-cta-text: #ffffff;
   --sc-icon-color: #9ca3af;
-  --sc-icon-hover: #111111;
+  --sc-icon-hover: #111827;
 }
 
-/* Dark mode overrides */
+/* Dark mode - AI Professional Black */
 .dark {
-  /* single unified dark surface */
-  --sc-bg: #111113;
-  --sc-border: #27272a;
-  --sc-divider: #27272a;
-  --sc-body-bg: #111113;
+  --sc-bg: #09090b;
+  --sc-border: rgba(255, 255, 255, 0.1);
+  --sc-divider: rgba(255, 255, 255, 0.05);
+  --sc-body-bg: #09090b;
   --sc-strip-bg: #111113;
-  --sc-label: #e4e4e7;
-  --sc-title: #fafafa;
-  --sc-meta: #52525b;
-  --sc-badge-bg: #1e1730;
-  --sc-badge-icon: #a78bfa;
-  --sc-tag-bg: #1c1c1f;
+  --sc-label: #a1a1aa;
+  --sc-title: #f8fafc;
+  --sc-meta: #71717a;
+  --sc-badge-bg: #18181b;
+  --sc-badge-icon: #a1a1aa;
+  --sc-tag-bg: #18181b;
   --sc-tag-text: #a1a1aa;
-  --sc-tag-border: #27272a;
-  --sc-cta-bg: #fafafa;
-  --sc-cta-text: #111111;
-  --sc-icon-color: #52525b;
-  --sc-icon-hover: #e4e4e7;
+  --sc-tag-border: rgba(255, 255, 255, 0.05);
+  --sc-cta-bg: #ffffff;
+  --sc-cta-text: #09090b;
+  --sc-icon-color: #71717a;
+  --sc-icon-hover: #f8fafc;
 }
 
-/* Card hover lift */
+/* Project Snippet Card Special Design - Professional Midnight Blue */
+/* Project Snippet Card - Distinguished but Unified */
+.sc-card.sc-card--project {
+  --sc-border: #6366f1;
+  /* Indigo accent border */
+  --sc-badge-bg: #eef2ff;
+  --sc-badge-icon: #4f46e5;
+  --sc-project-label: #4f46e5;
+  --sc-lang-label: #4b5563;
+  --sc-tag-bg: #eef2ff;
+  --sc-tag-text: #4338ca;
+}
+
+.dark .sc-card.sc-card--project {
+  --sc-border: #4f46e5;
+  /* Indigo accent border */
+  --sc-badge-bg: rgba(79, 70, 229, 0.15);
+  --sc-badge-icon: #818cf8;
+  --sc-project-label: #818cf8;
+  --sc-lang-label: #94a3b8;
+  --sc-tag-bg: rgba(79, 70, 229, 0.1);
+  --sc-tag-text: #a5b4fc;
+  --sc-tag-border: rgba(79, 70, 229, 0.2);
+}
+
 .sc-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.12) !important;
-  border-color: #c4b5fd !important;
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
 }
 
 .dark .sc-card:hover {
-  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.5) !important;
-  border-color: #7c3aed80 !important;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.sc-card.sc-card--project:hover {
+  border-color: #818cf8 !important;
+  box-shadow: 0 20px 40px -12px rgba(79, 70, 229, 0.15) !important;
+}
+
+.dark .sc-card.sc-card--project:hover {
+  border-color: #6366f1 !important;
+  box-shadow: 0 20px 40px -12px rgba(79, 70, 229, 0.3) !important;
 }
 
 /* Icon action buttons */
