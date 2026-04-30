@@ -2,6 +2,72 @@ import React, { useState, useRef } from 'react';
 import { Save, X, Code, Tag, AlignLeft, ChevronDown, Layers, Package, Globe, Lock, Star, Folder, Calendar, Paperclip, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, isToday, addDays } from 'date-fns';
 import Editor from '@monaco-editor/react';
+import * as SiIcons from 'react-icons/si';
+
+const iconColors = {
+  SiJavascript: '#F7DF1E',
+  SiTypescript: '#3178C6',
+  SiPython: '#3776AB',
+  SiHtml5: '#E34F26',
+  SiCss3: '#1572B6',
+  SiReact: '#61DAFB',
+  SiNextdotjs: '#000000',
+  SiNodedotjs: '#339933',
+  SiExpress: '#000000',
+  SiMongodb: '#47A248',
+  SiPostgresql: '#4169E1',
+  SiRedis: '#DC382D',
+  SiTailwindcss: '#06B6D4',
+  SiDocker: '#2496ED',
+  SiGit: '#F05032',
+  SiGithub: '#181717',
+  SiVercel: '#000000',
+  SiSocketdotio: '#010101',
+  SiRender: '#46E3B7',
+  SiFirebase: '#FFCA28',
+  SiSupabase: '#3ECF8E',
+  SiMysql: '#4479A1',
+  SiGraphql: '#E10098',
+  SiDjango: '#092E20',
+  SiFlask: '#000000',
+  SiRust: '#000000',
+  SiGo: '#00ADD8',
+  SiSwift: '#F05138',
+  SiKotlin: '#7F52FF',
+  SiJava: '#007396',
+  SiCplusplus: '#00599C',
+  SiCsharp: '#239120',
+  SiPhp: '#777BB4',
+  SiLaravel: '#FF2D20',
+  SiVuejs: '#4FC08D',
+  SiAngular: '#DD0031',
+  SiSvelte: '#FF3E00',
+  SiRedux: '#764ABC',
+  SiZustand: '#433929',
+  SiC: '#A8B9CC',
+  SiDart: '#0175C2',
+  SiJson: '#000000',
+  SiGnubash: '#4EAA25',
+  SiMarkdown: '#000000',
+  SiSpringboot: '#6DB33F',
+};
+
+const getSiIconName = (lang) => {
+  if (!lang) return null;
+  const search = lang.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const keys = Object.keys(SiIcons);
+  const exactMatch = keys.find(key => key.toLowerCase().replace(/^si/, '') === search);
+  if (exactMatch) return exactMatch;
+  const aliases = {
+    'js': 'SiJavascript', 'ts': 'SiTypescript', 'py': 'SiPython', 'cpp': 'SiCplusplus',
+    'c#': 'SiCsharp', 'golang': 'SiGo', 'node': 'SiNodedotjs', 'mongo': 'SiMongodb',
+    'sql': 'SiPostgresql', 'bash': 'SiGnubash', 'c': 'SiC', 'dart': 'SiDart',
+    'json': 'SiJson', 'md': 'SiMarkdown', 'markdown': 'SiMarkdown', 'spring': 'SiSpringboot',
+    'springboot': 'SiSpringboot',
+  };
+  if (aliases[search]) return aliases[search];
+  return keys.find(key => key.toLowerCase().replace(/^si/, '').includes(search)) || null;
+};
 // Removed legacy error components
 import api from '../../api/api';
 import { toast } from '../ui/Notification.jsx';
@@ -432,7 +498,14 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], pr
                   onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
                   className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:text-white transition-all text-left"
                 >
-                  <span className="truncate">{LANGUAGES.find(l => l.value === formData.language)?.label || 'Select Language'}</span>
+                  <div className="flex items-center gap-2 truncate">
+                    {(() => {
+                      const iconName = getSiIconName(formData.language);
+                      const Icon = iconName ? SiIcons[iconName] : null;
+                      return Icon ? <Icon style={{ width: '16px', height: '16px', color: iconColors[iconName] || 'currentColor' }} /> : <Code size={16} />;
+                    })()}
+                    <span>{LANGUAGES.find(l => l.value === formData.language)?.label || 'Select Language'}</span>
+                  </div>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -450,7 +523,14 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], pr
                           }}
                           className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.language === lang.value ? 'bg-[#a78bfa]/10 text-[#a78bfa] font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
                         >
-                          {lang.label}
+                          <div className="flex items-center gap-3">
+                            {(() => {
+                              const iconName = getSiIconName(lang.value);
+                              const Icon = iconName ? SiIcons[iconName] : null;
+                              return Icon ? <Icon style={{ width: '16px', height: '16px', color: iconColors[iconName] || 'currentColor' }} /> : <Code size={16} className="text-gray-400" />;
+                            })()}
+                            <span>{lang.label}</span>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -471,7 +551,14 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], pr
                   onClick={() => setIsFrameworkDropdownOpen(!isFrameworkDropdownOpen)}
                   className="w-full h-[44px] flex items-center justify-between rounded-xl border border-gray-200 dark:border-[#27272a] bg-white dark:bg-[#09090b] pl-10 pr-4 text-[15px] outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa]/50 dark:text-white transition-all text-left"
                 >
-                  <span className="truncate">{FRAMEWORKS.find(f => f.value === formData.framework)?.label || 'None / Vanilla'}</span>
+                  <div className="flex items-center gap-2 truncate">
+                    {(() => {
+                      const iconName = getSiIconName(formData.framework);
+                      const Icon = iconName ? SiIcons[iconName] : null;
+                      return Icon ? <Icon style={{ width: '16px', height: '16px', color: iconColors[iconName] || 'currentColor' }} /> : <Layers size={16} />;
+                    })()}
+                    <span>{FRAMEWORKS.find(f => f.value === formData.framework)?.label || 'None / Vanilla'}</span>
+                  </div>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isFrameworkDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -489,7 +576,14 @@ export default function NewSnippet({ onSave, onCancel, existingSnippets = [], pr
                           }}
                           className={`w-full flex items-center px-4 py-2.5 text-[14px] transition-colors text-left ${formData.framework === fw.value ? 'bg-[#a78bfa]/10 text-[#a78bfa] font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800/50'}`}
                         >
-                          {fw.label}
+                          <div className="flex items-center gap-3">
+                            {(() => {
+                              const iconName = getSiIconName(fw.value);
+                              const Icon = iconName ? SiIcons[iconName] : null;
+                              return Icon ? <Icon style={{ width: '16px', height: '16px', color: iconColors[iconName] || 'currentColor' }} /> : <Layers size={16} className="text-gray-400" />;
+                            })()}
+                            <span>{fw.label}</span>
+                          </div>
                         </button>
                       ))}
                     </div>
