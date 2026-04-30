@@ -46,5 +46,6 @@ erDiagram
         string snippetId
         boolean isCompleted
         date createdAt
+        string type "Used to categorize milestones/goals"
     }
 ```

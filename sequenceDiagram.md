@@ -29,9 +29,12 @@ sequenceDiagram
 
     %% Calendar Flow
     rect rgb(240, 230, 230)
-        Note over User, DB: Milestone Tracking
-        User->>Frontend: Create Milestone
-        Frontend->>DB: Save CalendarEvent
-        Frontend->>Frontend: Optimistic Update
+        Note over User, DB: Milestone & Analytics Tracking
+        Frontend->>SnippetAPI: Fetch Milestone Events
+        SnippetAPI->>DB: Get User Events
+        DB-->>SnippetAPI: Event List
+        SnippetAPI-->>Frontend: Events Array
+        Frontend->>Frontend: Calculate Stats (Peak Day, Monthly Total)
+        Frontend-->>User: Render Calendar & Activity Insights
     end
 ```

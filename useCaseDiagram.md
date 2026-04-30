@@ -20,7 +20,7 @@ flowchart LR
 
     subgraph Productivity
         Developer --> Calendar[Manage Milestones]
-        Developer --> Activity[Track Activity Levels]
+        Developer --> Activity[Analyze Milestone-Based Activity]
     end
 
     subgraph Administration

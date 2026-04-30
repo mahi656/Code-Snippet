@@ -44,6 +44,7 @@ classDiagram
         +create()
         +update()
         +complete()
+        +static calculateInsights(events[])
     }
 
     User "1" -- "*" Snippet : manages

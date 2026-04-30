@@ -53,19 +53,14 @@ Calendar & activity flow
       |
       |-- Create milestone event tied to work timeline
       |-- Fetch monthly events for calendar grid
-      |-- Fetch date-range activity summary
-      |-- Render daily milestones + system activity insights
+      |-- Dynamic analytics (Monthly Total, Active Days, Peak Day) derived from milestones
+      |-- Render daily milestones + activity insights
 
-Sharing flow
+Organization & Aesthetics
       |
-      |-- Generate share link for snippet
-      |-- Access public snippet by secure token
-      |-- Deactivate share link when no longer needed
-
-Dashboard analytics
-      |
-      |-- Aggregate user snippet stats
-      |-- Provide high-level workspace insights
+      |-- Professional AI-inspired design (Midnight Blue & Slate)
+      |-- Project-specific snippet distinction with subtle accents
+      |-- Segmented card layout for high readability
 ```
 
 ## Tech Stack
@@ -74,19 +69,18 @@ Dashboard analytics
 | Area | Technology |
 |---|---|
 | Language | TypeScript |
-| Framework | Express.js |
+| Framework | NestJS / Express.js |
 | Database | MongoDB + Mongoose |
 | Authentication | JWT + bcrypt + GitHub OAuth |
 | File uploads | Multer |
-| Runtime tooling | ts-node-dev |
 
 ### Frontend
 | Area | Technology |
 |---|---|
 | Framework | React + Vite |
 | Routing | React Router |
-| Styling | Tailwind CSS |
-| UI Components | Radix UI + custom components |
+| Styling | Tailwind CSS (Modern Glassmorphism & AI Aesthetics) |
+| UI Components | Radix UI + Lucide React |
 | Animation | Framer Motion |
 | Date handling | date-fns |
 | API client | Axios |
